@@ -10,16 +10,25 @@ export const AuthProvider = ({ children }) => {
         user: null,
     });
 
-    const login = ({ user, accessToken , refreshToken})=>{
+    const login = (responseData) => {
+        // Extract from your actual response structure
+        const accessToken = responseData.token; // Backend uses "token" not "accessToken"
+        const refreshToken = responseData.refreshToken;
+        const user = responseData.user;
+
+        console.log('Login - Setting token:', accessToken);
+        console.log('Login - User:', user);
+
         setAccessToken(accessToken);
         sessionStorage.setItem("refreshToken", refreshToken);
         setAuthState({
-            isAuthenticated:true,
-            user:user,
+            isAuthenticated: true,
+            user: user,
         });
     };
     const logout = () => {
         setAccessToken(null);
+        localStorage.removeItem('accessToken');
         sessionStorage.clear();
         setAuthState({
             isAuthenticated: false,
