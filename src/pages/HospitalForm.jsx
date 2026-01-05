@@ -1,77 +1,336 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import {
-  TextField,
-  PrimaryButton,
-  DefaultButton,
-  MessageBar,
+    Stack,
+    Text,
+    TextField,
+    PrimaryButton,
+    DefaultButton,
+    MessageBar,
+    MessageBarType,
+    Label,
 } from "@fluentui/react";
-import { createHospitalApi } from "../api/hospitalApi";
-import { useState } from "react";
+import { createHospitalApi, updateHospitalApi } from "../api/hospitalApi";
+import { useState, useEffect } from "react";
 
-export default function HospitalForm({ onSuccess, onCancel }) {
-  const { register, handleSubmit } = useForm();
-  const [error, setError] = useState(null);
+export default function HospitalForm({ hospital, mode = 'create', onSuccess, onCancel }) {
+    const {
+        control,
+        handleSubmit,
+        reset,
+        formState: { errors }
+    } = useForm({
+        defaultValues: {
+            hospitalName: '',
+            hospitalAddress: '',
+            firstContactName: '',
+            firstContactEmail: '',
+            firstContactNumber: '',
+            secondContactName: '',
+            secondContactEmail: '',
+            secondContactNumber: '',
+        }
+    });
 
-  const onSubmit = async (data) => {
-    try {
-      await createHospitalApi({
-        hospitalName: data.hospitalName,
-        hospitalAddress: data.hospitalAddress,
-        firstContact: {
-          name: data.firstContactName,
-          email: data.firstContactEmail,
-          contactNumber: data.firstContactNumber,
-        },
-        secondContact: {
-          name: data.secondContactName,
-          email: data.secondContactEmail,
-          contactNumber: data.secondContactNumber,
-        },
-      });
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-      onSuccess();
-    } catch {
-      setError("Hospital creation failed");
-    }
-  };
+    // Pre-fill form if in edit mode
+    useEffect(() => {
+        if (mode === 'edit' && hospital) {
+            const formValues = {
+                hospitalName: hospital.name || '',
+                hospitalAddress: hospital.address || '',
+                firstContactName: '',
+                firstContactEmail: '',
+                firstContactNumber: '',
+                secondContactName: '',
+                secondContactEmail: '',
+                secondContactNumber: '',
+            };
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <TextField
-        label="Hospital Name"
-        {...register("hospitalName", { required: true })}
-      />
+            // Set primary contact (contactType = 0)
+            const primaryContact = hospital.contacts?.find(c => c.contactType === 0);
+            if (primaryContact) {
+                formValues.firstContactName = primaryContact.name || '';
+                formValues.firstContactEmail = primaryContact.email || '';
+                formValues.firstContactNumber = primaryContact.phone || '';
+            }
 
-      <TextField
-        label="Hospital Address"
-        multiline
-        {...register("hospitalAddress", { required: true })}
-      />
+            // Set secondary contact (contactType = 1)
+            const secondaryContact = hospital.contacts?.find(c => c.contactType === 1);
+            if (secondaryContact) {
+                formValues.secondContactName = secondaryContact.name || '';
+                formValues.secondContactEmail = secondaryContact.email || '';
+                formValues.secondContactNumber = secondaryContact.phone || '';
+            }
 
-      <TextField label="First Contact Name" {...register("firstContactName")} />
-      <TextField label="First Contact Email" {...register("firstContactEmail")} />
-      <TextField
-        label="First Contact Number"
-        {...register("firstContactNumber")}
-      />
+            reset(formValues);
+        }
+    }, [hospital, mode, reset]);
 
-      <TextField
-        label="Second Contact Name"
-        {...register("secondContactName")}
-      />
-      <TextField
-        label="Second Contact Email"
-        {...register("secondContactEmail")}
-      />
-      <TextField
-        label="Second Contact Number"
-        {...register("secondContactNumber")}
-      />
+    const onSubmit = async (data) => {
+        setLoading(true);
+        setError(null);
 
-      {error && <MessageBar messageBarType={3}>{error}</MessageBar>}
+        try {
+            const payload = {
+                hospitalName: data.hospitalName,
+                hospitalAddress: data.hospitalAddress,
+                firstContact: {
+                    name: data.firstContactName || '',
+                    email: data.firstContactEmail || '',
+                    contactNumber: data.firstContactNumber || '',
+                },
+                secondContact: {
+                    name: data.secondContactName || '',
+                    email: data.secondContactEmail || '',
+                    contactNumber: data.secondContactNumber || '',
+                },
+            };
 
-      <PrimaryButton type="submit" text="Save" />
-      <DefaultButton text="Cancel" onClick={onCancel} />
-    </form>
-  );
+            if (mode === 'edit' && hospital) {
+                await updateHospitalApi(hospital.id, payload);
+            } else {
+                await createHospitalApi(payload);
+            }
+
+            onSuccess();
+        } catch (err) {
+            console.error('Form submission error:', err);
+            setError(mode === 'edit' ? "Failed to update hospital" : "Failed to create hospital");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Stack
+            styles={{
+                root: {
+                    backgroundColor: 'white',
+                    padding: 24,
+                    borderRadius: 8,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    maxWidth: 600,
+                    margin: '0 auto',
+                    width: '100%'
+                }
+            }}
+            tokens={{ childrenGap: 20 }}
+        >
+            <Text variant="xLarge" styles={{ root: { fontWeight: 600, marginBottom: 8 } }}>
+                {mode === 'edit' ? 'Edit Hospital' : 'Create New Hospital'}
+            </Text>
+
+            {mode === 'edit' && hospital && (
+                <Text variant="small" styles={{ root: { color: '#605e5c', marginBottom: 16 } }}>
+                    Hospital Code: {hospital.hospitalCode}
+                </Text>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <Stack tokens={{ childrenGap: 16 }}>
+                    {/* Hospital Information */}
+                    <Stack tokens={{ childrenGap: 12 }}>
+                        <Label styles={{ root: { fontWeight: 600, fontSize: 14 } }}>Hospital Information</Label>
+                        <Controller
+                            name="hospitalName"
+                            control={control}
+                            rules={{
+                                required: "Hospital name is required",
+                                minLength: { value: 3, message: "Minimum 3 characters required" }
+                            }}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    label="Hospital Name"
+                                    required
+                                    errorMessage={errors.hospitalName?.message}
+                                    disabled={loading}
+                                    styles={{ root: { width: '100%' } }}
+                                />
+                            )}
+                        />
+
+                        <Controller
+                            name="hospitalAddress"
+                            control={control}
+                            rules={{
+                                required: "Hospital address is required",
+                                minLength: { value: 10, message: "Minimum 10 characters required" }
+                            }}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    label="Hospital Address"
+                                    multiline
+                                    rows={3}
+                                    required
+                                    errorMessage={errors.hospitalAddress?.message}
+                                    disabled={loading}
+                                    styles={{ root: { width: '100%' } }}
+                                />
+                            )}
+                        />
+                    </Stack>
+
+                    {/* Primary Contact */}
+                    <Stack tokens={{ childrenGap: 12 }}>
+                        <Label styles={{ root: { fontWeight: 600, fontSize: 14 } }}>Primary Contact</Label>
+                        <Controller
+                            name="firstContactName"
+                            control={control}
+                            rules={{ required: "Primary contact name is required" }}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    label="Contact Name"
+                                    required
+                                    errorMessage={errors.firstContactName?.message}
+                                    disabled={loading}
+                                    styles={{ root: { width: '100%' } }}
+                                />
+                            )}
+                        />
+
+                        <Stack horizontal tokens={{ childrenGap: 16 }}>
+                            <Controller
+                                name="firstContactEmail"
+                                control={control}
+                                rules={{
+                                    required: "Email is required",
+                                    pattern: {
+                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                        message: "Invalid email address"
+                                    }
+                                }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Email"
+                                        type="email"
+                                        required
+                                        errorMessage={errors.firstContactEmail?.message}
+                                        disabled={loading}
+                                        styles={{ root: { flex: 1 } }}
+                                    />
+                                )}
+                            />
+
+                            <Controller
+                                name="firstContactNumber"
+                                control={control}
+                                rules={{
+                                    required: "Phone number is required",
+                                    pattern: {
+                                        value: /^[0-9]{10}$/,
+                                        message: "Must be 10 digits"
+                                    }
+                                }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Phone Number"
+                                        required
+                                        errorMessage={errors.firstContactNumber?.message}
+                                        disabled={loading}
+                                        styles={{ root: { flex: 1 } }}
+                                    />
+                                )}
+                            />
+                        </Stack>
+                    </Stack>
+
+                    {/* Secondary Contact */}
+                    <Stack tokens={{ childrenGap: 12 }}>
+                        <Label styles={{ root: { fontWeight: 600, fontSize: 14 } }}>Secondary Contact (Optional)</Label>
+                        <Controller
+                            name="secondContactName"
+                            control={control}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    label="Contact Name"
+                                    disabled={loading}
+                                    styles={{ root: { width: '100%' } }}
+                                />
+                            )}
+                        />
+
+                        <Stack horizontal tokens={{ childrenGap: 16 }}>
+                            <Controller
+                                name="secondContactEmail"
+                                control={control}
+                                rules={{
+                                    pattern: {
+                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                        message: "Invalid email address"
+                                    }
+                                }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Email"
+                                        type="email"
+                                        errorMessage={errors.secondContactEmail?.message}
+                                        disabled={loading}
+                                        styles={{ root: { flex: 1 } }}
+                                    />
+                                )}
+                            />
+
+                            <Controller
+                                name="secondContactNumber"
+                                control={control}
+                                rules={{
+                                    pattern: {
+                                        value: /^[0-9]{10}$/,
+                                        message: "Must be 10 digits"
+                                    }
+                                }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Phone Number"
+                                        errorMessage={errors.secondContactNumber?.message}
+                                        disabled={loading}
+                                        styles={{ root: { flex: 1 } }}
+                                    />
+                                )}
+                            />
+                        </Stack>
+                    </Stack>
+
+                    {/* Error Message */}
+                    {error && (
+                        <MessageBar messageBarType={MessageBarType.error} onDismiss={() => setError(null)}>
+                            {error}
+                        </MessageBar>
+                    )}
+
+                    {/* Action Buttons */}
+                    <Stack horizontal tokens={{ childrenGap: 8 }} horizontalAlign="end">
+                        <DefaultButton
+                            text="Cancel"
+                            onClick={onCancel}
+                            disabled={loading}
+                            styles={{ root: { minWidth: 80 } }}
+                        />
+                        <PrimaryButton
+                            type="submit"
+                            text={loading ? "Saving..." : (mode === 'edit' ? 'Update Hospital' : 'Create Hospital')}
+                            disabled={loading}
+                            styles={{
+                                root: {
+                                    minWidth: 120,
+                                    backgroundColor: mode === 'edit' ? '#0078d4' : '#107c10',
+                                    borderColor: mode === 'edit' ? '#0078d4' : '#107c10',
+                                }
+                            }}
+                        />
+                    </Stack>
+                </Stack>
+            </form>
+        </Stack>
+    );
 }
