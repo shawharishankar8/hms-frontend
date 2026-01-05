@@ -5,7 +5,6 @@ import {
     PrimaryButton,
     MessageBar,
 } from "@fluentui/react";
-import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { registerApi } from "../api/authApi";
 import { useNavigate, Link } from "react-router-dom";
@@ -68,17 +67,16 @@ const VALIDATION_PATTERNS = {
 };
 
 export default function Register() {
-    const {
-        register,
-        handleSubmit,
-        watch,
-        formState: { errors, isSubmitting },
-        trigger,
-    } = useForm({
-        mode: "onBlur",
+    const [formData, setFormData] = useState({
+        name: '',
+        username: '',
+        password: '',
+        confirmPassword: '',
     });
 
+    const [errors, setErrors] = useState({});
     const [message, setMessage] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -93,59 +91,100 @@ export default function Register() {
         };
     }, []);
 
-    const handleBlur = async (fieldName) => {
-        await trigger(fieldName);
+    const handleInputChange = (fieldName, value) => {
+        console.log(`Field ${fieldName} change:`, value);
+        setFormData(prev => ({
+            ...prev,
+            [fieldName]: value
+        }));
+
+        // Clear error for this field
+        if (errors[fieldName]) {
+            setErrors(prev => ({
+                ...prev,
+                [fieldName]: ''
+            }));
+        }
     };
 
-    const validatePassword = (value) => {
-        if (!value) return "Password cannot be blank";
-        if (value.length < 8) return "Password needs to be at least 8 characters";
-        if (!VALIDATION_PATTERNS.password.test(value)) {
-            return "Password must contain: 1 uppercase, 1 lowercase, 1 number, and 1 special character";
+    const validateForm = () => {
+        const newErrors = {};
+
+        // Name validation
+        if (!formData.name.trim()) {
+            newErrors.name = "The name cannot be empty";
+        } else if (formData.name.trim().length < 3) {
+            newErrors.name = "Name must be at least 3 characters";
+        } else if (formData.name.trim().length > 50) {
+            newErrors.name = "Name cannot exceed 50 characters";
+        } else if (!VALIDATION_PATTERNS.name.test(formData.name.trim())) {
+            newErrors.name = "Name can only contain alphabets and spaces";
         }
-        return true;
+
+        // Username validation
+        if (!formData.username.trim()) {
+            newErrors.username = "Username cannot be empty";
+        } else if (formData.username.trim().length < 3) {
+            newErrors.username = "Username must be at least 3 characters";
+        } else if (formData.username.trim().length > 50) {
+            newErrors.username = "Username cannot exceed 50 characters";
+        } else if (!VALIDATION_PATTERNS.username.test(formData.username.trim())) {
+            newErrors.username = "Username can contain only letters, numbers and @";
+        }
+
+        // Password validation
+        if (!formData.password) {
+            newErrors.password = "Password cannot be empty";
+        } else if (formData.password.length < 8) {
+            newErrors.password = "Password must be at least 8 characters";
+        } else if (!VALIDATION_PATTERNS.password.test(formData.password)) {
+            newErrors.password = "Password must contain: 1 uppercase, 1 lowercase, 1 number, and 1 special character";
+        }
+
+        // Confirm password validation
+        if (!formData.confirmPassword) {
+            newErrors.confirmPassword = "Please confirm your password";
+        } else if (formData.confirmPassword !== formData.password) {
+            newErrors.confirmPassword = "Passwords do not match";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
-    const validateUsername = (value) => {
-        if (!value) return "Username cannot be empty";
-        if (value.length < 3) return "Username must be at least 3 characters";
-        if (value.length > 50) return "Username cannot exceed 50 characters";
-        if (value.startsWith(' ') || value.endsWith(' ')) {
-            return "Username should not start or end with spaces";
-        }
-        if (!VALIDATION_PATTERNS.username.test(value)) {
-            return "Username can contain only letters, numbers and @";
-        }
-        return true;
-    };
-
-    const validateName = (value) => {
-        if (!value) return "The name cannot be empty";
-        if (value.length < 3) return "Name must be at least 3 characters";
-        if (value.length > 50) return "Name cannot exceed 50 characters";
-        if (!VALIDATION_PATTERNS.name.test(value)) {
-            return "Name can only contain alphabets and spaces";
-        }
-        return true;
-    };
-
-    const onSubmit = async (data) => {
+    const onSubmit = async (e) => {
+        e?.preventDefault();
         setMessage(null);
 
-        console.log('Form data:', {
-            name: data.name,
-            username: data.username,
-            nameLength: data.name?.length,
-            usernameLength: data.username?.length,
+        console.log('Form data before validation:', {
+            name: formData.name,
+            username: formData.username,
+            password: formData.password,
+            nameLength: formData.name?.length,
+            usernameLength: formData.username?.length,
+            passwordLength: formData.password?.length,
         });
 
-        // NO TRIMMING - send exactly what user typed
+        if (!validateForm()) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        // Send EXACTLY what's in state
         const payload = {
-            name: data.name,        // NO .trim()
-            username: data.username, // NO .trim()
-            password: data.password,
-            confirmPassword: data.confirmPassword,
+            name: formData.name.trim(),
+            username: formData.username.trim(),
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
         };
+
+        console.log('Payload being sent:', {
+            ...payload,
+            nameLength: payload.name?.length,
+            usernameLength: payload.username?.length,
+            passwordLength: payload.password?.length,
+        });
 
         try {
             const response = await registerApi(payload);
@@ -168,6 +207,8 @@ export default function Register() {
                 type: "error",
                 text: errorMessage
             });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -197,7 +238,7 @@ export default function Register() {
                 styles={{ root: { width: '100%', maxWidth: '1200px' } }}
             >
                 <Stack styles={cardStyles}>
-                    <form onSubmit={handleSubmit(onSubmit)}>
+                    <form onSubmit={onSubmit}>
                         <Stack tokens={{ childrenGap: 32 }}>
                             <Text variant="xxLarge" styles={{
                                 root: {
@@ -219,16 +260,13 @@ export default function Register() {
                                 Create your account to get started
                             </Text>
 
-                            {/* Name Field */}
+                            {/* Name Field - CONTROLLED */}
                             <Stack tokens={{ childrenGap: 4 }}>
                                 <TextField
                                     placeholder="Full Name (e.g., John Doe)"
-                                    {...register("name", {
-                                        required: "The name cannot be empty",
-                                        validate: validateName,
-                                    })}
-                                    onBlur={() => handleBlur("name")}
-                                    errorMessage={errors.name?.message}
+                                    value={formData.name}
+                                    onChange={(e, value) => handleInputChange('name', value)}
+                                    errorMessage={errors.name}
                                     required
                                     styles={{
                                         ...inputStyles,
@@ -237,6 +275,12 @@ export default function Register() {
                                         }
                                     }}
                                     iconProps={{ iconName: 'Contact' }}
+                                    onKeyDown={(e) => {
+                                        // Debug key presses
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                        }
+                                    }}
                                 />
                                 <Text variant="small" styles={{
                                     root: {
@@ -251,16 +295,13 @@ export default function Register() {
                                 </Text>
                             </Stack>
 
-                            {/* Username Field */}
+                            {/* Username Field - CONTROLLED */}
                             <Stack tokens={{ childrenGap: 4 }}>
                                 <TextField
                                     placeholder="Username (e.g., johndoe@123)"
-                                    {...register("username", {
-                                        required: "Username cannot be empty",
-                                        validate: validateUsername,
-                                    })}
-                                    onBlur={() => handleBlur("username")}
-                                    errorMessage={errors.username?.message}
+                                    value={formData.username}
+                                    onChange={(e, value) => handleInputChange('username', value)}
+                                    errorMessage={errors.username}
                                     required
                                     styles={{
                                         ...inputStyles,
@@ -283,17 +324,14 @@ export default function Register() {
                                 </Text>
                             </Stack>
 
-                            {/* Password Field */}
+                            {/* Password Field - CONTROLLED */}
                             <Stack tokens={{ childrenGap: 4 }}>
                                 <TextField
                                     placeholder="Password"
                                     type="password"
-                                    {...register("password", {
-                                        required: "Password cannot be empty",
-                                        validate: validatePassword,
-                                    })}
-                                    onBlur={() => handleBlur("password")}
-                                    errorMessage={errors.password?.message}
+                                    value={formData.password}
+                                    onChange={(e, value) => handleInputChange('password', value)}
+                                    errorMessage={errors.password}
                                     required
                                     canRevealPassword
                                     styles={{
@@ -317,23 +355,14 @@ export default function Register() {
                                 </Text>
                             </Stack>
 
-                            {/* Confirm Password Field */}
+                            {/* Confirm Password Field - CONTROLLED */}
                             <Stack tokens={{ childrenGap: 4 }}>
                                 <TextField
                                     placeholder="Confirm Password"
                                     type="password"
-                                    {...register("confirmPassword", {
-                                        required: "Please confirm your password",
-                                        validate: (value) => {
-                                            if (!value) return "Please confirm your password";
-                                            if (value !== watch("password")) {
-                                                return "Passwords do not match";
-                                            }
-                                            return true;
-                                        },
-                                    })}
-                                    onBlur={() => handleBlur("confirmPassword")}
-                                    errorMessage={errors.confirmPassword?.message}
+                                    value={formData.confirmPassword}
+                                    onChange={(e, value) => handleInputChange('confirmPassword', value)}
+                                    errorMessage={errors.confirmPassword}
                                     required
                                     canRevealPassword
                                     styles={{
