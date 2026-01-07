@@ -11,8 +11,8 @@ export const AuthProvider = ({ children }) => {
     });
 
     const login = (responseData) => {
-        // Extract from your actual response structure
-        const accessToken = responseData.token; // Backend uses "token" not "accessToken"
+
+        const accessToken = responseData.token;
         const refreshToken = responseData.refreshToken;
         const user = responseData.user;
 

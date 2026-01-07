@@ -3,19 +3,17 @@ import {
   Stack,
   Text,
   PrimaryButton,
+    DefaultButton,
   MessageBar,
   MessageBarType,
-  Dialog,
-  DialogFooter,
-  DefaultButton,
-  TextField,
-  Dropdown,
   Spinner,
   SpinnerSize,
+  Modal,
 } from "@fluentui/react";
 import { getHospitalsApi } from "../api/hospitalApi";
 import HospitalTable from "../components/HospitalTable";
 import HospitalForm from "./HospitalForm";
+import DicomModal from "../components/DicomModal";
 
 export default function HospitalList() {
   const [hospitals, setHospitals] = useState([]);
@@ -23,16 +21,28 @@ export default function HospitalList() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState(null);
-  const [showDicomDialog, setShowDicomDialog] = useState(false);
-  const [formMode, setFormMode] = useState('create'); // 'create' or 'edit'
+  const [showDicomModal, setShowDicomModal] = useState(false);
+  const [formMode, setFormMode] = useState('create');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchType, setSearchType] = useState("name");
 
   const fetchHospitals = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const res = await getHospitalsApi();
-      console.log('Fetched hospitals:', res.data.data);
+
+      const params ={};
+      if(searchTerm.trim())
+      {
+        if(searchType === "name"){
+            params.hospitalName = searchTerm.trim();
+        }
+        else {
+            params.hospitalCode = searchTerm.trim();
+        }
+      }
+      const res = await getHospitalsApi(params);
       setHospitals(res.data.data || []);
     } catch (err) {
       console.error('Error fetching hospitals:', err);
@@ -48,17 +58,15 @@ export default function HospitalList() {
 
   // Handle Edit Hospital button click
   const handleEditHospital = (hospital) => {
-    console.log('Editing hospital:', hospital);
     setSelectedHospital(hospital);
     setFormMode('edit');
     setShowForm(true);
   };
 
-  // Handle Add DICOM button click
-  const handleAddDicom = (hospital) => {
-    console.log('Adding DICOM for hospital:', hospital);
+  // Handle View/Upload DICOM button click
+  const handleViewDicom = (hospital) => {
     setSelectedHospital(hospital);
-    setShowDicomDialog(true);
+    setShowDicomModal(true);
   };
 
   // Handle Create Hospital button click
@@ -72,7 +80,7 @@ export default function HospitalList() {
   const handleFormSuccess = () => {
     setShowForm(false);
     setSelectedHospital(null);
-    fetchHospitals(); // Refresh the list
+    fetchHospitals();
   };
 
   // Handle form cancel
@@ -81,36 +89,17 @@ export default function HospitalList() {
     setSelectedHospital(null);
   };
 
-  // Handle DICOM configuration submit
-  const handleDicomSubmit = () => {
-    // TODO: Implement actual DICOM configuration API call
-    console.log('Submitting DICOM config for:', selectedHospital);
-
-    // Simulate API call
-    setTimeout(() => {
-      alert(`DICOM configuration saved for ${selectedHospital?.name}`);
-      setShowDicomDialog(false);
-      setSelectedHospital(null);
-    }, 500);
-  };
-
   return (
-      <Stack tokens={{ childrenGap: 24 }} styles={{ root: { padding: 24, minHeight: '100vh' } }}>
+      <Stack tokens={{ childrenGap: 24 }} styles={{ root: { padding: 24, minHeight: '100vh', position: 'relative' } }}>
         {/* Header */}
         <Stack tokens={{ childrenGap: 8 }}>
           <Text variant="xLarge" styles={{ root: { fontWeight: 600, color: '#323130' } }}>
             Hospital Management
           </Text>
-          <Text variant="small" styles={{ root: { color: '#605e5c' } }}>
-            Manage registered hospitals and their contact details
-          </Text>
         </Stack>
 
         {/* Action Bar */}
         <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-          <Text variant="medium" styles={{ root: { fontWeight: 600 } }}>
-            Total Hospitals: {hospitals.length}
-          </Text>
           <PrimaryButton
               text="Create New Hospital"
               iconProps={{ iconName: 'Add' }}
@@ -123,6 +112,78 @@ export default function HospitalList() {
               }}
           />
         </Stack>
+          {/* Search Bar */}
+          <Stack horizontal tokens={{ childrenGap: 10 }} verticalAlign="end">
+              <Stack.Item grow>
+                  <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign="end">
+                      {/* Search Type Dropdown */}
+                      <div style={{ width: 120 }}>
+                          <select
+                              value={searchType}
+                              onChange={(e) => setSearchType(e.target.value)}
+                              style={{
+                                  width: '100%',
+                                  padding: '6px 12px',
+                                  borderRadius: '4px',
+                                  border: '1px solid #8a8886',
+                                  fontSize: '14px',
+                                  backgroundColor: 'white',
+                              }}
+                          >
+                              <option value="name">Hospital Name</option>
+                              <option value="code">Hospital Code</option>
+                          </select>
+                      </div>
+
+                      {/* Search Input */}
+                      <div style={{ flex: 1 }}>
+                          <input
+                              type="text"
+                              placeholder={`Search by ${searchType === 'name' ? 'hospital name' : 'hospital code'}...`}
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              style={{
+                                  width: '50%',
+                                  padding: '6px 12px',
+                                  borderRadius: '4px',
+                                  border: '1px solid #8a8886',
+                                  fontSize: '14px',
+                              }}
+                          />
+                      </div>
+
+                      {/* Search Button */}
+                      <PrimaryButton
+                          text="Search"
+                          onClick={() => fetchHospitals()}
+                          styles={{
+                              root: {
+                                  borderRadius: 10,
+                                  padding: '0 20px',
+                                  marginLeft: '10px',
+                              }
+                          }}
+                      />
+
+                      {/* Clear Button (only show when there's a search term) */}
+                      {searchTerm && (
+                          <DefaultButton
+                              text="Clear"
+                              onClick={() => {
+                                  setSearchTerm("");
+                                  fetchHospitals();
+                              }}
+                              styles={{
+                                  root: {
+                                      borderRadius: 4,
+                                      padding: '0 20px',
+                                  }
+                              }}
+                          />
+                      )}
+                  </Stack>
+              </Stack.Item>
+          </Stack>
 
         {/* Loading State */}
         {loading && (
@@ -156,111 +217,45 @@ export default function HospitalList() {
             <HospitalTable
                 hospitals={hospitals}
                 onEditHospital={handleEditHospital}
-                onAddDicom={handleAddDicom}
+                onViewDicom={handleViewDicom}
             />
         )}
 
-        {/* Create/Edit Hospital Form */}
-        {showForm && (
-            <HospitalForm
-                hospital={selectedHospital}
-                mode={formMode}
-                onSuccess={handleFormSuccess}
-                onCancel={handleFormCancel}
-            />
-        )}
-
-        {/* DICOM Configuration Dialog */}
-        <Dialog
-            hidden={!showDicomDialog}
-            onDismiss={() => {
-              setShowDicomDialog(false);
-              setSelectedHospital(null);
-            }}
-            dialogContentProps={{
-              title: `DICOM Configuration - ${selectedHospital?.name}`,
-              subText: 'Configure DICOM/PACS settings for this hospital'
-            }}
-            maxWidth={500}
-            modalProps={{
-              isBlocking: true,
-              styles: { main: { maxWidth: 500 } }
+        {/* Create/Edit Hospital Form Modal */}
+        <Modal
+            isOpen={showForm}
+            onDismiss={handleFormCancel}
+            isBlocking={true}
+            styles={{
+              main: {
+                maxWidth: 650,
+                width: '90%',
+                borderRadius: 8,
+                padding: 0,
+              },
+              scrollableContent: {
+                maxHeight: '90vh',
+                overflow: 'auto',
+              }
             }}
         >
-          <Stack tokens={{ childrenGap: 20 }}>
-            <Stack tokens={{ childrenGap: 12 }}>
-              <TextField
-                  label="DICOM Server IP Address"
-                  placeholder="e.g., 192.168.1.100"
-                  required
-                  styles={{ root: { width: '100%' } }}
-              />
-              <TextField
-                  label="Port Number"
-                  placeholder="e.g., 104"
-                  type="number"
-                  required
-                  styles={{ root: { width: '100%' } }}
-              />
-              <TextField
-                  label="AE Title (Application Entity)"
-                  placeholder="e.g., HOSPITAL_PACS"
-                  required
-                  styles={{ root: { width: '100%' } }}
-              />
-              <Dropdown
-                  label="DICOM Protocol"
-                  placeholder="Select protocol"
-                  options={[
-                    { key: 'c-store', text: 'C-STORE - Store images' },
-                    { key: 'c-find', text: 'C-FIND - Query/Retrieve' },
-                    { key: 'c-move', text: 'C-MOVE - Move images' },
-                    { key: 'c-echo', text: 'C-ECHO - Verification' },
-                  ]}
-                  defaultSelectedKey="c-store"
-                  styles={{ root: { width: '100%' } }}
-              />
-              <TextField
-                  label="Retrieve AE Title"
-                  placeholder="e.g., LOCAL_PACS"
-                  styles={{ root: { width: '100%' } }}
-              />
-            </Stack>
+          <HospitalForm
+              hospital={selectedHospital}
+              mode={formMode}
+              onSuccess={handleFormSuccess}
+              onCancel={handleFormCancel}
+          />
+        </Modal>
 
-            <Stack tokens={{ childrenGap: 8 }}>
-              <Text variant="smallPlus" styles={{ root: { fontWeight: 600 } }}>
-                Connection Test
-              </Text>
-              <Text variant="small" styles={{ root: { color: '#605e5c' } }}>
-                After saving, you can test the DICOM connection from the hospital details page.
-              </Text>
-            </Stack>
-          </Stack>
-
-          <DialogFooter>
-            <DefaultButton
-                onClick={() => {
-                  setShowDicomDialog(false);
-                  setSelectedHospital(null);
-                }}
-                text="Cancel"
-            />
-            <PrimaryButton
-                onClick={handleDicomSubmit}
-                text="Save Configuration"
-                styles={{
-                  root: {
-                    backgroundColor: '#107c10',
-                    borderColor: '#107c10',
-                    ':hover': {
-                      backgroundColor: '#0c6b0c',
-                      borderColor: '#0c6b0c',
-                    }
-                  }
-                }}
-            />
-          </DialogFooter>
-        </Dialog>
+        {/* DICOM Modal for Viewing/Uploading DICOM files */}
+        <DicomModal
+            hospital={selectedHospital}
+            isOpen={showDicomModal}
+            onDismiss={() => {
+              setShowDicomModal(false);
+              setSelectedHospital(null);
+            }}
+        />
       </Stack>
   );
 }
