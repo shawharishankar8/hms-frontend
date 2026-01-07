@@ -222,6 +222,8 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
             <DetailsList
                 items={hospitals}
                 columns={columns}
+                selectionMode={1}
+                checkboxVisibility={2}
                 styles={{
                     root: {
                         border: "1px solid #e1dfdd",

@@ -101,7 +101,7 @@ export default function HospitalList() {
         {/* Action Bar */}
         <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
           <PrimaryButton
-              text="Create New Hospital"
+              text="Hospital"
               iconProps={{ iconName: 'Add' }}
               onClick={handleCreateHospital}
               styles={{
@@ -117,7 +117,7 @@ export default function HospitalList() {
               <Stack.Item grow>
                   <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign="end">
                       {/* Search Type Dropdown */}
-                      <div style={{ width: 120 }}>
+                      <div style={{ width: 140 }}>
                           <select
                               value={searchType}
                               onChange={(e) => setSearchType(e.target.value)}
@@ -143,8 +143,8 @@ export default function HospitalList() {
                               value={searchTerm}
                               onChange={(e) => setSearchTerm(e.target.value)}
                               style={{
-                                  width: '50%',
                                   padding: '6px 12px',
+                                  width: 'calc(100% - 300px)',
                                   borderRadius: '4px',
                                   border: '1px solid #8a8886',
                                   fontSize: '14px',
@@ -158,7 +158,7 @@ export default function HospitalList() {
                           onClick={() => fetchHospitals()}
                           styles={{
                               root: {
-                                  borderRadius: 10,
+                                  borderRadius: 4,
                                   padding: '0 20px',
                                   marginLeft: '10px',
                               }

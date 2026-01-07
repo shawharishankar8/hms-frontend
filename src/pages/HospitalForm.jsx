@@ -88,6 +88,8 @@ export default function HospitalForm({ hospital, mode = 'create', onSuccess, onC
                 },
             };
 
+            console.log('Payload being sent:', JSON.stringify(payload, null, 2));
+
             if (mode === 'edit' && hospital) {
                 await updateHospitalApi(hospital.id, payload);
             } else {

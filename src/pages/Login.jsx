@@ -4,14 +4,12 @@ import {
   TextField,
   PrimaryButton,
   MessageBar,
-  IconButton,
-  Checkbox,
+  MessageBarType,
 } from "@fluentui/react";
 import { useState, useEffect } from "react";
 import { loginApi } from "../api/authApi";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate, Link } from "react-router-dom";
-
 
 const cardStyles = {
   root: {
@@ -38,6 +36,10 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({
+    username: '',
+    password: ''
+  });
 
   useEffect(() => {
     const prevHtmlOverflow = document.documentElement.style.overflow;
@@ -51,19 +53,58 @@ export default function Login() {
     };
   }, []);
 
+  const validateForm = (username, password) => {
+    const errors = {};
+    let isValid = true;
+
+    if (!username || username.trim() === '') {
+      errors.username = "Email or username is required";
+      isValid = false;
+    }
+
+    if (!password || password.trim() === '') {
+      errors.password = "Password is required";
+      isValid = false;
+    }
+
+    setFieldErrors(errors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = {
-      username: e.target.username.value,
-      password: e.target.password.value,
-    };
+
+    const username = e.target.username.value;
+    const password = e.target.password.value;
+
+    // Clear previous errors
+    setError(null);
+
+    // Validate fields
+    if (!validateForm(username, password)) {
+      return;
+    }
 
     try {
-      const res = await loginApi(payload);
+      const res = await loginApi({ username, password });
       login(res.data);
       navigate("/hospital");
     } catch {
       setError("Invalid credentials");
+    }
+  };
+
+  const handleInputChange = (fieldName) => {
+    // Clear field error when user starts typing
+    if (fieldErrors[fieldName]) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [fieldName]: ''
+      }));
+    }
+    // Clear general error when user modifies any field
+    if (error) {
+      setError(null);
     }
   };
 
@@ -95,52 +136,95 @@ export default function Login() {
 
           {/* LEFT SIDE: Login Card */}
           <Stack styles={cardStyles}>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <Stack tokens={{ childrenGap: 25 }}>
-                <Text variant="xxLarge" styles={{ root: { textAlign: 'center', fontWeight: 700 } }}>Create an account</Text>
-                <Text variant="xLarge" styles={{ root: { textAlign: 'center', fontWeight: 500 } }}>LogIn to get access</Text>
+                <Text variant="xxLarge" styles={{ root: { textAlign: 'center', fontWeight: 500, marginBottom: 0 } }}>Welcome Back</Text>
+                <Text variant="xLarge" styles={{ root: { textAlign: 'center', fontWeight: 300, marginTop: 0, fontSize: 20 } }}>Log In to get access</Text>
 
-                <TextField
-                    name="username"
-                    placeholder="Email or Username"
-                    required
-                    styles={inputStyles}
-                    iconProps={{ iconName: 'Contact' }}
-                />
+                <div style={{ minHeight: 30 }}>
+                  {error && (
+                      <MessageBar
+                          messageBarType={MessageBarType.error}
+                          styles={{ root: { borderRadius: 8 } }}
+                          onDismiss={() => setError(null)}
+                      >
+                        {error}
+                      </MessageBar>
+                  )}
+                </div>
+                {/* Reserve space for error messages without shifting layout */}
+                <Stack tokens={{ childrenGap: 25 }} styles={{ root: { position: 'relative', minHeight: 160 } }}>
 
-                <TextField
-                    name="password"
-                    type="password"
-                    placeholder="Password"
-                    required
-                    canRevealPassword
-                    styles={inputStyles}
-                    iconProps={{ iconName: 'Lock' }}
-                />
+                  {/* Error container at the top */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    minHeight: 60
+                  }}>
 
-                <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-                  <Checkbox label="Remember Password" styles={{ text: { fontSize: 12 } }} />
-                  <Link to="/forgot" style={{ fontSize: 12, color: '#000', fontWeight: 600, textDecoration: 'none' }}>Forgot Password?</Link>
+                  </div>
+
+                  {/* Username field with reserved space for error */}
+                  <div style={{ minHeight: 80 }}>
+                    <TextField
+                        name="username"
+                        placeholder="Email or Username"
+                        required
+                        styles={{
+                          ...inputStyles,
+                          fieldGroup: fieldErrors.username ? {
+                            ...inputStyles.fieldGroup,
+                            borderColor: '#a4262c'
+                          } : inputStyles.fieldGroup
+                        }}
+                        errorMessage={fieldErrors.username}
+                        onChange={() => handleInputChange('username')}
+                    />
+                  </div>
+
+                  {/* Password field with reserved space for error */}
+                  <div style={{ minHeight: 80 }}>
+                    <TextField
+                        name="password"
+                        type="password"
+                        placeholder="Password"
+                        required
+                        canRevealPassword
+                        styles={{
+                          ...inputStyles,
+                          fieldGroup: fieldErrors.password ? {
+                            ...inputStyles.fieldGroup,
+                            borderColor: '#a4262c'
+                          } : inputStyles.fieldGroup
+                        }}
+                        errorMessage={fieldErrors.password}
+                        onChange={() => handleInputChange('password')}
+                    />
+                  </div>
+
+                  {/* Login Button */}
+                  <PrimaryButton
+                      text="Login"
+                      type="submit"
+                      styles={{
+                        root: {
+                          height: 50,
+                          width: '65%',
+                          alignSelf: 'center',
+                          borderRadius: 12,
+                          backgroundColor: '#000829',
+                          border: 'none',
+                          marginTop: 20
+                        }
+                      }}
+                  />
                 </Stack>
 
-                <PrimaryButton
-                    text="Login"
-                    type="submit"
-                    styles={{
-                      root: {
-                        height: 50,
-                        borderRadius: 12,
-                        backgroundColor: '#000829', // Dark navy from image
-                        border: 'none'
-                      }
-                    }}
-                />
-
-                <Text styles={{ root: { textAlign: 'center', fontSize: 13 } }}>
+                <Text styles={{ root: { textAlign: 'center', fontSize: 13, marginTop: 20 } }}>
                   Don't have an account yet? <Link to="/register" style={{ color: '#005FB8', fontWeight: 600 }}>Register with us</Link>
                 </Text>
-
-                {error && <MessageBar messageBarType={1}>{error}</MessageBar>}
               </Stack>
             </form>
           </Stack>

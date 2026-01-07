@@ -238,13 +238,13 @@ export default function Register() {
                 styles={{ root: { width: '100%', maxWidth: '1200px' } }}
             >
                 <Stack styles={cardStyles}>
-                    <form onSubmit={onSubmit}>
+                    <form onSubmit={onSubmit} noValidate>
                         <Stack tokens={{ childrenGap: 32 }}>
                             <Text variant="xxLarge" styles={{
                                 root: {
                                     textAlign: 'center',
                                     fontWeight: 700,
-                                    marginBottom: 8,
+                                    marginBottom: 0,
                                 }
                             }}>
                                 Register
@@ -255,6 +255,7 @@ export default function Register() {
                                     textAlign: 'center',
                                     color: '#605e5c',
                                     marginBottom: 16,
+                                    marginTop:6
                                 }
                             }}>
                                 Create your account to get started
@@ -262,8 +263,9 @@ export default function Register() {
 
                             {/* Name Field - CONTROLLED */}
                             <Stack tokens={{ childrenGap: 4 }}>
+                                <div style={{ minHeight: 70 }}>
                                 <TextField
-                                    placeholder="Full Name (e.g., John Doe)"
+                                    placeholder="Full Name "
                                     value={formData.name}
                                     onChange={(e, value) => handleInputChange('name', value)}
                                     errorMessage={errors.name}
@@ -274,7 +276,7 @@ export default function Register() {
                                             width: '100%',
                                         }
                                     }}
-                                    iconProps={{ iconName: 'Contact' }}
+
                                     onKeyDown={(e) => {
                                         // Debug key presses
                                         if (e.key === 'Enter') {
@@ -291,26 +293,29 @@ export default function Register() {
                                         paddingLeft: '4px',
                                     }
                                 }}>
-                                    Letters and spaces only, 3-50 characters
+
                                 </Text>
+                                    </div>
                             </Stack>
 
                             {/* Username Field - CONTROLLED */}
                             <Stack tokens={{ childrenGap: 4 }}>
-                                <TextField
-                                    placeholder="Username (e.g., johndoe@123)"
-                                    value={formData.username}
-                                    onChange={(e, value) => handleInputChange('username', value)}
-                                    errorMessage={errors.username}
-                                    required
-                                    styles={{
-                                        ...inputStyles,
-                                        root: {
-                                            width: '100%',
-                                        }
-                                    }}
-                                    iconProps={{ iconName: 'Contact' }}
-                                />
+                                <div style={{ minHeight: 70 }}>
+                                    <TextField
+                                        placeholder="Username"
+                                        value={formData.username}
+                                        onChange={(e, value) => handleInputChange('username', value)}
+                                        errorMessage={errors.username}
+                                        required
+                                        styles={{
+                                            ...inputStyles,
+                                            root: {
+                                                width: '100%',
+                                            }
+                                        }}
+                                    />
+
+
                                 <Text variant="small" styles={{
                                     root: {
                                         color: '#605e5c',
@@ -320,12 +325,13 @@ export default function Register() {
                                         paddingLeft: '4px',
                                     }
                                 }}>
-                                    Letters, numbers, @ only. No spaces. 3-50 characters
                                 </Text>
+                                </div>
                             </Stack>
 
                             {/* Password Field - CONTROLLED */}
                             <Stack tokens={{ childrenGap: 4 }}>
+                                <div style={{ minHeight: 70 }}>
                                 <TextField
                                     placeholder="Password"
                                     type="password"
@@ -340,7 +346,7 @@ export default function Register() {
                                             width: '100%',
                                         }
                                     }}
-                                    iconProps={{ iconName: 'Lock' }}
+
                                 />
                                 <Text variant="small" styles={{
                                     root: {
@@ -351,12 +357,14 @@ export default function Register() {
                                         paddingLeft: '4px',
                                     }
                                 }}>
-                                    8+ characters with: uppercase, lowercase, number, special character (@$!%*?&)
+
                                 </Text>
+                                </div>
                             </Stack>
 
                             {/* Confirm Password Field - CONTROLLED */}
                             <Stack tokens={{ childrenGap: 4 }}>
+                                <div style={{ minHeight: 70 }}>
                                 <TextField
                                     placeholder="Confirm Password"
                                     type="password"
@@ -371,8 +379,9 @@ export default function Register() {
                                             width: '100%',
                                         }
                                     }}
-                                    iconProps={{ iconName: 'Lock' }}
+
                                 />
+                                </div>
                             </Stack>
 
                             {/* Submit Button */}

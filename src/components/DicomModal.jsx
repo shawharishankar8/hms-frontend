@@ -234,7 +234,7 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
             isOpen={isOpen}
             onDismiss={onDismiss}
             isBlocking={false}
-            styles={{ main: { maxWidth: 600, width: '90%', borderRadius: 8 } }}
+            styles={{ main: { maxWidth: 1100, width: '95%', borderRadius: 8 ,minHeight:600} }}
         >
             <Stack tokens={{ childrenGap: 20 }} styles={{ root: { padding: 20 } }}>
                 <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
@@ -312,88 +312,112 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                 {/* SCENARIO A: DICOM View (when has DICOM file) */}
                 {!showUpload && dicomData?.hasFile && (
                     <Stack tokens={{ childrenGap: 24 }}>
-                        {/* Image Preview - USE DicomViewer instead of img tag */}
-                        <Stack
-                            horizontalAlign="center"
-                            verticalAlign="center"
-                            styles={{
-                                root: {
-                                    backgroundColor: '#f3f2f1',
-                                    padding: 20,
-                                    borderRadius: 4,
-                                    minHeight: 300,
-                                    border: '1px solid #e1dfdd'
-                                }
-                            }}
-                        >{imageId ? (
-                                <DicomViewer imageId={imageId} />
-                            ) : dicomData?.dicomFileBase64 ? (
-                                <div style={{
-                                    width: "100%",
-                                    height: "300px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    backgroundColor: "black",
-                                    borderRadius: 4,
-                                }}>
-                                    <Spinner label="Preparing DICOM viewer..." size={SpinnerSize.medium} />
-                                </div>
-                            ) : (
-                                <Stack horizontalAlign="center" tokens={{ childrenGap: 16 }}>
-                                    <span style={{ fontSize: 64, color: '#605e5c' }}>🩻</span>
-                                    <Text variant="mediumPlus">DICOM Image Loaded</Text>
-                                    <Text variant="small" styles={{ root: { color: '#a19f9d' } }}>
-                                        (Image data not available in preview)
+                        {/* Horizontal Layout for Image and Data */}
+                        <Stack horizontal tokens={{ childrenGap: 40 }} styles={{ root: { alignItems: 'flex-start' } }}>
+                            {/* Left Side: DICOM Image */}
+                            <Stack
+                                styles={{
+                                    root: {
+                                        flex: 2, // Takes more space
+                                        backgroundColor: '#f3f2f1',
+                                        padding: 16,
+                                        borderRadius: 4,
+                                        minHeight: 500,
+                                        height: '70vh',
+                                        border: '1px solid #e1dfdd',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }
+                                }}
+                            >
+                                {imageId ? (
+                                    <DicomViewer imageId={imageId} />
+                                ) : dicomData?.dicomFileBase64 ? (
+                                    <div style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        backgroundColor: "black",
+                                        borderRadius: 4,
+                                    }}>
+                                        <Spinner label="Preparing DICOM viewer..." size={SpinnerSize.medium} />
+                                    </div>
+                                ) : (
+                                    <Stack horizontalAlign="center" tokens={{ childrenGap: 16 }}>
+                                        <span style={{ fontSize: 64, color: '#605e5c' }}>🩻</span>
+                                        <Text variant="mediumPlus">DICOM Image Loaded</Text>
+                                        <Text variant="small" styles={{ root: { color: '#a19f9d' } }}>
+                                            (Image data not available in preview)
+                                        </Text>
+                                    </Stack>
+                                )}
+                            </Stack>
+
+                            {/* Right Side: Patient Information */}
+                            {dicomData?.patientDetails && (
+                                <Stack
+                                    tokens={{ childrenGap: 16 }}
+                                    styles={{
+                                        root: {
+                                            flex: 1,
+                                            backgroundColor: '#faf9f8',
+                                            padding: 20,
+                                            borderRadius: 4,
+                                            minHeight: 500,
+                                            height: '70vh',
+                                            border: '1px solid #e1dfdd',
+                                            minWidth: 250
+                                        }
+                                    }}
+                                >
+                                    <Text variant="mediumPlus" styles={{ root: { fontWeight: 600 } }}>
+                                        Patient Information
                                     </Text>
+                                    <Separator />
+                                    <Stack tokens={{ childrenGap: 12 }}>
+                                        {[
+                                            { label: 'Patient Name', value: dicomData.patientDetails.patientName },
+                                            { label: 'Patient ID', value: dicomData.patientDetails.patientId },
+                                            { label: 'Birth Date', value: dicomData.patientDetails.birthDate },
+                                            { label: 'Sex', value: dicomData.patientDetails.sex },
+                                            { label: 'Age', value: dicomData.patientDetails.age },
+                                            { label: 'Upload Date', value: dicomData.patientDetails.uploadDate },
+                                        ].map((item, index) => (
+                                            <Stack key={index} tokens={{ childrenGap: 8 }}>
+                                                <Text variant="smallPlus" styles={{ root: { color: '#605e5c', fontWeight: 600 } }}>
+                                                    {item.label}
+                                                </Text>
+                                                <Text variant="medium" styles={{ root: { marginBottom: 4 } }}>
+                                                    {item.value || 'N/A'}
+                                                </Text>
+                                                {index < 5 && <Separator />}
+                                            </Stack>
+                                        ))}
+                                    </Stack>
                                 </Stack>
                             )}
                         </Stack>
 
-                        {/* Patient Information */}
-                        {dicomData?.patientDetails && (
-                            <Stack tokens={{ childrenGap: 16 }}>
-                                <Text variant="mediumPlus" styles={{ root: { fontWeight: 600 } }}>
-                                    Patient Information
-                                </Text>
-                                <Separator />
-                                <Stack tokens={{ childrenGap: 12 }}>
-                                    {[
-                                        { label: 'Patient Name', value: dicomData.patientDetails.patientName },
-                                        { label: 'Patient ID', value: dicomData.patientDetails.patientId },
-                                        { label: 'Birth Date', value: dicomData.patientDetails.birthDate },
-                                        { label: 'Sex', value: dicomData.patientDetails.sex },
-                                        { label: 'Age', value: dicomData.patientDetails.age },
-                                        { label: 'Upload Date', value: dicomData.patientDetails.uploadDate },
-                                    ].map((item, index) => (
-                                        <Stack horizontal key={index} tokens={{ childrenGap: 20 }}>
-                                            <Text variant="smallPlus" styles={{ root: { color: '#605e5c', width: 100 } }}>
-                                                {item.label}:
-                                            </Text>
-                                            <Text variant="medium">{item.value || 'N/A'}</Text>
-                                        </Stack>
-                                    ))}
-                                </Stack>
-                            </Stack>
-                        )}
-
                         {/* Replace/Add New Button */}
-                        <Stack horizontal horizontalAlign="end">
+                        <Stack horizontal horizontalAlign="center" tokens={{ childrenGap: 12 }}>
                             <PrimaryButton
                                 onClick={() => {
                                     setShowUpload(true);
                                     setError(null);
                                 }}
+                                styles={{ root: { minWidth: 150 } }}
                             >
                                 Replace/Add New
                             </PrimaryButton>
+                            <DefaultButton onClick={onDismiss}  styles={{ root: { minWidth: 150 } }}>Close</DefaultButton>
                         </Stack>
                     </Stack>
                 )}
 
-                <Stack horizontal horizontalAlign="end">
-                    <DefaultButton onClick={onDismiss}>Close</DefaultButton>
-                </Stack>
+
             </Stack>
         </Modal>
     );
