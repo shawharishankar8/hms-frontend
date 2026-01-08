@@ -121,7 +121,7 @@ export default function Login() {
             },
           }}
       >
-        <Stack styles={{ root: { position: 'absolute', top: 40, left: 60 } }} horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
+        <Stack styles={{ root: { position: 'absolute', top: 40, left: 60 } }} horizontal verticalAlign="center" tokens={{ childrenGap: 4 }}>
           <div style={{ width: 24, height: 24, backgroundColor: '#00C2FF', borderRadius: 6 }} />
           <Text variant="large" styles={{ root: { fontWeight: 700, color: '#1A1C1E' } }}>HMS</Text>
         </Stack>
@@ -137,7 +137,7 @@ export default function Login() {
           {/* LEFT SIDE: Login Card */}
           <Stack styles={cardStyles}>
             <form onSubmit={handleSubmit} noValidate>
-              <Stack tokens={{ childrenGap: 25 }}>
+              <Stack tokens={{ childrenGap: 10 }}>
                 <Text variant="xxLarge" styles={{ root: { textAlign: 'center', fontWeight: 500, marginBottom: 0 } }}>Welcome Back</Text>
                 <Text variant="xLarge" styles={{ root: { textAlign: 'center', fontWeight: 300, marginTop: 0, fontSize: 20 } }}>Log In to get access</Text>
 
@@ -153,7 +153,7 @@ export default function Login() {
                   )}
                 </div>
                 {/* Reserve space for error messages without shifting layout */}
-                <Stack tokens={{ childrenGap: 25 }} styles={{ root: { position: 'relative', minHeight: 160 } }}>
+                <Stack tokens={{ childrenGap: 10 }} styles={{ root: { position: 'relative', minHeight: 160 } }}>
 
                   {/* Error container at the top */}
                   <div style={{
@@ -214,7 +214,10 @@ export default function Login() {
                           width: '65%',
                           alignSelf: 'center',
                           borderRadius: 12,
-                          backgroundColor: '#000829',
+                          backgroundColor: '#005FB8',
+                          ':hover': {
+                            backgroundColor: '#001950',
+                          },
                           border: 'none',
                           marginTop: 20
                         }

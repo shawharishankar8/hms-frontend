@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useId } from '@fluentui/react-hooks';
 import {
     Modal,
     PrimaryButton,
@@ -23,9 +24,11 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
     const [showUpload, setShowUpload] = useState(true);
     const fileInputRef = useRef(null);
     const [imageId, setImageId] = useState(null);
+    const [toastMessage, setToastMessage] = useState(null);
+
 
     const hospitalId = hospital?.id;
-
+    const toastId = useId('toast');
 
     // Fetch DICOM data when modal opens
     useEffect(() => {
@@ -55,6 +58,15 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
             }, 10000);
         };
     }, [imageId]);
+
+    useEffect(() => {
+        if (toastMessage) {
+            const timer = setTimeout(() => {
+                setToastMessage(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [toastMessage]);
 
     const fetchDicomData = async () => {
         if (!hospitalId) return;
@@ -91,11 +103,11 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                 setDicomData({ hasFile: false });
                 setShowUpload(true);
             } else if (err.response?.status === 403) {
-                setError('Access forbidden. You may not have permission to view DICOM files.');
+                setToastMessage('Access forbidden. You may not have permission to view DICOM files.');
             } else if (err.response?.status === 401) {
-                setError('Please log in to access DICOM files.');
+                setToastMessage('Please log in to access DICOM files.');
             } else {
-                setError('Failed to load DICOM data');
+                setToastMessage('Failed to load DICOM data');
             }
         } finally {
             setIsLoading(false);
@@ -146,6 +158,7 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                 // TRANSITION: Update UI with complete data
                 setDicomData(newDicomData);
                 setShowUpload(false);
+                setToastMessage({ type: 'success', text: 'DICOM file uploaded successfully!' });
 
             } catch (fetchErr) {
                 console.error('Failed to fetch after upload:', fetchErr);
@@ -164,15 +177,18 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
         } catch (err) {
             console.error('DICOM upload error:', err.response?.status, err.message);
             if (err.response?.status === 403) {
-                setError('Access forbidden. You may not have permission to upload DICOM files.');
+                setToastMessage('Access forbidden. You may not have permission to upload DICOM files.');
             } else if (err.response?.status === 401) {
-                setError('Please log in to upload DICOM files.');
+                setToastMessage('Please log in to upload DICOM files.');
             } else {
-                setError('Upload failed. Please try again.');
+                setToastMessage('Upload failed. Please try again.');
             }
         } finally {
             setIsUploading(false);
         }
+
+
+
     };
     // Helper to convert Base64 to Cornerstone imageId
     const convertBase64ToImageId = (base64Data) => {
@@ -234,15 +250,63 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
             isOpen={isOpen}
             onDismiss={onDismiss}
             isBlocking={false}
-            styles={{ main: { maxWidth: 1100, width: '95%', borderRadius: 8 ,minHeight:600} }}
+            styles={{  main: {
+                    maxWidth: 1100,
+                    width: '95%',
+                    borderRadius: 8,
+                    minHeight: 600,
+                    padding: 0,
+                    margin: 0
+                },
+                root: {
+                    padding: 0,
+                    margin: 0
+                },
+                scrollableContent: {
+                    padding: 0,
+                    margin: 0
+                } }}
         >
-            <Stack tokens={{ childrenGap: 20 }} styles={{ root: { padding: 20 } }}>
+            <div style={{ padding: 0, margin: 0 }}>
+                <Stack tokens={{ childrenGap: 20 }} styles={{
+                    root: {
+                        padding: 20,
+                        margin: 0
+                    }
+                }}>
+
+            <Stack tokens={{ childrenGap: 20 }} styles={{ root: { padding: 20,margin: 0 } }}>
                 <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
                     <Text variant="xLarge" styles={{ root: { fontWeight: 600 } }}>
                         DICOM Management
                     </Text>
                     <IconButton iconProps={{ iconName: 'Cancel' }} onClick={onDismiss} />
                 </Stack>
+                {toastMessage && (
+                    <div style={{
+                        position: 'fixed',
+                        top: 20,
+                        right: 20,
+                        zIndex: 1000,
+                        minWidth: 300,
+                        maxWidth: 400,
+                        animation: 'fadeIn 0.3s ease-in'
+                    }}>
+                        <MessageBar
+                            messageBarType={toastMessage.type === 'success' ? MessageBarType.success : MessageBarType.error}
+                            onDismiss={() => setToastMessage(null)}
+                            dismissButtonAriaLabel="Close"
+                            styles={{
+                                root: {
+                                    borderRadius: 4,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                }
+                            }}
+                        >
+                            {toastMessage.text}
+                        </MessageBar>
+                    </div>
+                )}
 
                 <Separator />
 
@@ -285,20 +349,30 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                                     border: '2px dashed #c7e0f4',
                                     borderRadius: 4,
                                     backgroundColor: '#f3f2f1',
-                                    cursor: 'pointer'
+                                    // Removed cursor: 'pointer' from here
                                 }
                             }}
-                            onClick={() => fileInputRef.current?.click()}
+                            // Removed onClick handler from here
                         >
                             <span style={{ fontSize: 64, color: '#0078d4' }}>📤</span>
                             <Stack horizontalAlign="center" tokens={{ childrenGap: 8 }}>
                                 <Text variant="large" styles={{ root: { fontWeight: 600 } }}>
-                                    Click to upload DICOM file
+                                    Ready to upload DICOM file
                                 </Text>
                                 <Text variant="medium" styles={{ root: { color: '#605e5c' } }}>
                                     Supports .dcm files only
                                 </Text>
+                                {/* Add a clickable button here */}
+
                             </Stack>
+                        </Stack>
+                        <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 12 }}>
+                            <PrimaryButton
+                                onClick={() => fileInputRef.current?.click()}
+                                styles={{ root: { marginTop: 15 ,minWidth: 150} }}
+                            >
+                                Upload File
+                            </PrimaryButton>
                         </Stack>
 
                         {isUploading && (
@@ -313,7 +387,7 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                 {!showUpload && dicomData?.hasFile && (
                     <Stack tokens={{ childrenGap: 24 }}>
                         {/* Horizontal Layout for Image and Data */}
-                        <Stack horizontal tokens={{ childrenGap: 40 }} styles={{ root: { alignItems: 'flex-start' } }}>
+                        <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { alignItems: 'flex-start' } }}>
                             {/* Left Side: DICOM Image */}
                             <Stack
                                 styles={{
@@ -359,21 +433,22 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                             {/* Right Side: Patient Information */}
                             {dicomData?.patientDetails && (
                                 <Stack
-                                    tokens={{ childrenGap: 16 }}
+                                    tokens={{ childrenGap: 8 }} // Reduced from 16
                                     styles={{
                                         root: {
                                             flex: 1,
                                             backgroundColor: '#faf9f8',
-                                            padding: 20,
+                                            padding: 16, // Reduced from 20
                                             borderRadius: 4,
                                             minHeight: 500,
                                             height: '70vh',
                                             border: '1px solid #e1dfdd',
-                                            minWidth: 250
+                                            minWidth: 250,
+                                            overflowY: 'auto' // Added for scroll if needed
                                         }
                                     }}
                                 >
-                                    <Text variant="mediumPlus" styles={{ root: { fontWeight: 600 } }}>
+                                    <Text variant="mediumPlus" styles={{ root: { fontWeight: 600, marginBottom: 8 } }}>
                                         Patient Information
                                     </Text>
                                     <Separator />
@@ -386,13 +461,15 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                                             { label: 'Age', value: dicomData.patientDetails.age },
                                             { label: 'Upload Date', value: dicomData.patientDetails.uploadDate },
                                         ].map((item, index) => (
-                                            <Stack key={index} tokens={{ childrenGap: 8 }}>
-                                                <Text variant="smallPlus" styles={{ root: { color: '#605e5c', fontWeight: 600 } }}>
-                                                    {item.label}
-                                                </Text>
-                                                <Text variant="medium" styles={{ root: { marginBottom: 4 } }}>
-                                                    {item.value || 'N/A'}
-                                                </Text>
+                                            <Stack key={index} tokens={{ childrenGap: 4 }}> {/* Reduced from 8 */}
+                                                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 4 }}>
+                                                    <Text variant="smallPlus" styles={{ root: { color: '#605e5c', fontWeight: 600 } }}>
+                                                        {item.label}:
+                                                    </Text>
+                                                    <Text variant="medium" styles={{ root: { marginLeft: 4 } }}>
+                                                        {item.value || 'N/A'}
+                                                    </Text>
+                                                </Stack>
                                                 {index < 5 && <Separator />}
                                             </Stack>
                                         ))}
@@ -402,7 +479,9 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                         </Stack>
 
                         {/* Replace/Add New Button */}
-                        <Stack horizontal horizontalAlign="center" tokens={{ childrenGap: 12 }}>
+                        <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 12 }}>
+
+                            <DefaultButton onClick={onDismiss}  styles={{ root: { minWidth: 150 } }}>Close</DefaultButton>
                             <PrimaryButton
                                 onClick={() => {
                                     setShowUpload(true);
@@ -410,15 +489,17 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                                 }}
                                 styles={{ root: { minWidth: 150 } }}
                             >
-                                Replace/Add New
+                                Upload
                             </PrimaryButton>
-                            <DefaultButton onClick={onDismiss}  styles={{ root: { minWidth: 150 } }}>Close</DefaultButton>
+
                         </Stack>
                     </Stack>
                 )}
 
 
             </Stack>
+                </Stack>
+            </div>
         </Modal>
     );
 };

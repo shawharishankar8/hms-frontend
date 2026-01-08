@@ -4,6 +4,7 @@ import {
     TextField,
     PrimaryButton,
     MessageBar,
+    MessageBarType,
 } from "@fluentui/react";
 import { useState, useEffect } from "react";
 import { registerApi } from "../api/authApi";
@@ -201,6 +202,14 @@ export default function Register() {
             let errorMessage = "Registration failed. Please try again.";
             if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
+            } else if (err.response?.data?.error) {
+                errorMessage = err.response.data.error;
+            } else if (err.response?.status === 409) {
+                errorMessage = "Username already exists. Please choose a different username.";
+            } else if (err.response?.status === 400) {
+                errorMessage = "Invalid registration data. Please check your inputs.";
+            } else if (err.message) {
+                errorMessage = err.message;
             }
 
             setMessage({
@@ -239,7 +248,7 @@ export default function Register() {
             >
                 <Stack styles={cardStyles}>
                     <form onSubmit={onSubmit} noValidate>
-                        <Stack tokens={{ childrenGap: 32 }}>
+                        <Stack tokens={{ childrenGap: 10 }}>
                             <Text variant="xxLarge" styles={{
                                 root: {
                                     textAlign: 'center',
@@ -393,7 +402,7 @@ export default function Register() {
                                     root: {
                                         height: 50,
                                         borderRadius: 12,
-                                        backgroundColor: '#000829',
+                                        backgroundColor: '#005FB8',
                                         border: 'none',
                                         marginTop: 8,
                                         ':hover': {
@@ -433,7 +442,7 @@ export default function Register() {
                             {/* Success/Error Messages */}
                             {message && (
                                 <MessageBar
-                                    messageBarType={message.type === "error" ? 1 : 0}
+                                    messageBarType={message.type === "error" ? MessageBarType.error : MessageBarType.success}
                                     styles={{
                                         root: {
                                             marginTop: 16,

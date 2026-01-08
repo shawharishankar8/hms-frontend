@@ -1,4 +1,4 @@
-import { DetailsList, Text, Stack, IconButton, mergeStyles, Icon } from "@fluentui/react";
+import {DetailsList, Text, Stack, IconButton, mergeStyles, Icon, DetailsHeader} from "@fluentui/react";
 
 const cellStyles = mergeStyles({
     fontSize: '13px',
@@ -16,12 +16,9 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
             maxWidth: 300,
             isResizable: true,
             onRender: (item) => (
-                <Stack verticalAlign="center" styles={{ root: { height: '100%' } }}>
+                <Stack styles={{ root: { height: '100%' } }}>
                     <Text className={cellStyles} styles={{ root: { fontWeight: 600 } }}>
                         {item.name}
-                    </Text>
-                    <Text variant="small" styles={{ root: { color: '#605e5c' } }}>
-                        ID: {item.id}
                     </Text>
                 </Stack>
             ),
@@ -47,9 +44,21 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
             maxWidth: 350,
             isResizable: true,
             onRender: (item) => (
-                <Text className={cellStyles} styles={{ root: { lineHeight: '20px' } }}>
-                    {item.address}
-                </Text>
+                <div title={item.address} style={{ cursor: 'help' }}>
+                    <Text className={cellStyles} styles={{
+                        root: {
+                            lineHeight: '20px',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxHeight: '60px', // 3 lines * 20px line height
+                        }
+                    }}>
+                        {item.address}
+                    </Text>
+                </div>
             ),
         },
         {
@@ -57,22 +66,36 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
             name: "Registration Date",
             minWidth: 140,
             maxWidth: 160,
-            onRender: (item) => (
-                <Stack>
+            onRender: (item) => {
+
+                const formatDateTime = (value) => {
+                    if (!value) return "--";
+
+                    const date = new Date(value);
+
+                    if (isNaN(date.getTime())) return "--";
+
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const month = monthNames[date.getMonth()];
+                    const year = String(date.getFullYear()).slice(-2);
+
+                    let hours = date.getHours();
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12 || 12;
+
+                    return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
+                };
+
+                return (
                     <Text className={cellStyles} styles={{ root: { fontWeight: 600 } }}>
-                        {new Date(item.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                        })}
+                        {formatDateTime(item.date)}
                     </Text>
-                    <Text variant="small" styles={{ root: { color: '#605e5c' } }}>
-                        {new Date(item.date).toLocaleDateString('en-US', {
-                            weekday: 'short'
-                        })}
-                    </Text>
-                </Stack>
-            ),
+                );
+            },
+
         },
         {
             key: "primaryContact",
@@ -83,26 +106,46 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
                 const primaryContact = item.contacts?.find(c => c.contactType === 0);
 
                 return (
-                    <Stack tokens={{ childrenGap: 4 }}>
+                    <Stack tokens={{ childrenGap: 2 }}> {/* Reduced gap */}
                         {primaryContact ? (
                             <>
+                                {/* Name and icon in one line */}
                                 <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 6 }}>
-                                    <Icon iconName="Contact" styles={{ root: { fontSize: 12, color: '#0078d4' } }} />
-                                    <Text className={cellStyles} styles={{ root: { fontWeight: 600 } }}>
+                                    <Icon
+                                        iconName="Contact"
+                                        styles={{
+                                            root: {
+                                                fontSize: 12,
+                                                color: '#0078d4',
+                                                marginTop: 2 // Added to align with text
+                                            }
+                                        }}
+                                    />
+                                    <Text
+                                        className={cellStyles}
+                                        styles={{
+                                            root: {
+                                                fontWeight: 600,
+                                                lineHeight: '16px' // Added line height
+                                            }
+                                        }}
+                                    >
                                         {primaryContact.name}
                                     </Text>
                                 </Stack>
-                                <Stack styles={{ root: { paddingLeft: 18 } }}>
-                                    <Text variant="small" styles={{ root: { color: '#605e5c' } }}>
+
+                                {/* Phone and email below - NO extra padding left */}
+                                <Stack tokens={{ childrenGap: 2 }}>
+                                    <Text variant="small" styles={{ root: { color: '#605e5c', lineHeight: '16px' } }}>
                                         📞 {primaryContact.phone}
                                     </Text>
-                                    <Text variant="small" styles={{ root: { color: '#605e5c' } }}>
+                                    <Text variant="small" styles={{ root: { color: '#605e5c', lineHeight: '16px' } }}>
                                         ✉️ {primaryContact.email}
                                     </Text>
                                 </Stack>
                             </>
                         ) : (
-                            <Text variant="small" styles={{ root: { color: '#a19f9d', fontStyle: 'italic' } }}>
+                            <Text variant="small" styles={{ root: { color: '#a19f9d', fontStyle: 'italic', lineHeight: '40px' } }}>
                                 No primary contact
                             </Text>
                         )}
@@ -119,26 +162,43 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
                 const secondaryContact = item.contacts?.find(c => c.contactType === 1);
 
                 return (
-                    <Stack tokens={{ childrenGap: 4 }}>
+                    <Stack tokens={{ childrenGap: 2 }}>
                         {secondaryContact ? (
                             <>
                                 <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 6 }}>
-                                    <Icon iconName="Contact" styles={{ root: { fontSize: 12, color: '#8a8886' } }} />
-                                    <Text className={cellStyles} styles={{ root: { fontWeight: 600 } }}>
+                                    <Icon
+                                        iconName="Contact"
+                                        styles={{
+                                            root: {
+                                                fontSize: 12,
+                                                color: '#8a8886',
+                                                marginTop: 2
+                                            }
+                                        }}
+                                    />
+                                    <Text
+                                        className={cellStyles}
+                                        styles={{
+                                            root: {
+                                                fontWeight: 600,
+                                                lineHeight: '16px'
+                                            }
+                                        }}
+                                    >
                                         {secondaryContact.name}
                                     </Text>
                                 </Stack>
-                                <Stack styles={{ root: { paddingLeft: 18 } }}>
-                                    <Text variant="small" styles={{ root: { color: '#605e5c' } }}>
+                                <Stack tokens={{ childrenGap: 2 }}>
+                                    <Text variant="small" styles={{ root: { color: '#605e5c', lineHeight: '16px' } }}>
                                         📞 {secondaryContact.phone}
                                     </Text>
-                                    <Text variant="small" styles={{ root: { color: '#605e5c' } }}>
+                                    <Text variant="small" styles={{ root: { color: '#605e5c', lineHeight: '16px' } }}>
                                         ✉️ {secondaryContact.email}
                                     </Text>
                                 </Stack>
                             </>
                         ) : (
-                            <Text variant="small" styles={{ root: { color: '#a19f9d', fontStyle: 'italic' } }}>
+                            <Text variant="small" styles={{ root: { color: '#a19f9d', fontStyle: 'italic', lineHeight: '40px' } }}>
                                 No secondary contact
                             </Text>
                         )}
@@ -156,17 +216,17 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
                 <Stack horizontal tokens={{ childrenGap: 8 }}>
                     {/* DICOM File Icon */}
                     <IconButton
-                        iconProps={{ iconName: 'Documentation' }}
+                        iconProps={{ iconName: 'FileImage' }}
                         title="View/Upload DICOM"
                         ariaLabel="View/Upload DICOM"
                         styles={{
                             root: {
                                 height: 32,
                                 width: 32,
-                                color: '#107c10',
+                                color: '#0078d4',
                                 backgroundColor: 'transparent',
                                 ':hover': {
-                                    backgroundColor: '#107c10',
+                                    backgroundColor: '#0078d4',
                                     color: 'white'
                                 }
                             },
@@ -205,20 +265,35 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
     ];
 
     return (
-        <Stack tokens={{ childrenGap: 8 }}>
-            <Text variant="mediumPlus" styles={{
+        <Stack tokens={{ childrenGap: 8 }} styles={{ root: { padding: 0, margin: 0, width: '100vw' } }}>
+
+            {/* Registered Hospitals aligned to extreme right */}
+            <Stack horizontal horizontalAlign="end" verticalAlign="center" styles={{
                 root: {
-                    marginBottom: 16,
-                    fontWeight: 600,
-                    color: '#323130',
-                    paddingBottom: 8,
-                    borderBottom: '2px solid #e1dfdd'
+                    width: '100%',
+                    margin: 0,
+                    padding: 0,
                 }
             }}>
-                <Icon iconName="Hospital" styles={{ root: { marginRight: 8, fontSize: 18, color: '#0078d4' } }} />
-                Registered Hospitals ({hospitals.length})
-            </Text>
+                <Icon iconName="Hospital" styles={{
+                    root: {
+                        fontSize: 18,
+                        color: '#0078d4',
+                        marginRight: 6
+                    }
+                }} />
+                <Text variant="mediumPlus" styles={{
+                    root: {
+                        margin: 0,
+                        padding: 0,
+                        fontWeight: 600
+                    }
+                }}>
+                    {hospitals.length}:Registered Hospitals ()
+                </Text>
+            </Stack>
 
+            {/* Table */}
             <DetailsList
                 items={hospitals}
                 columns={columns}
@@ -238,7 +313,28 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
                         backgroundColor: '#ffffff',
                     }
                 }}
+                onRenderDetailsHeader={(props, defaultRender) => {
+                    if (!props) return null;
+
+                    return defaultRender({
+                        ...props,
+                        styles: {
+                            root: {
+                                paddingTop: 0,
+                                minHeight: 42,
+                            },
+                            cell: {
+                                paddingTop: 0,
+                            },
+                            cellTitle: {
+                                lineHeight: '42px',
+                                fontWeight: 600,
+                            },
+                        },
+                    });
+                }}
             />
         </Stack>
     );
+
 }

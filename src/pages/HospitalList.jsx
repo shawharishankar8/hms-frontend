@@ -90,99 +90,96 @@ export default function HospitalList() {
   };
 
   return (
-      <Stack tokens={{ childrenGap: 24 }} styles={{ root: { padding: 24, minHeight: '100vh', position: 'relative' } }}>
-        {/* Header */}
-        <Stack tokens={{ childrenGap: 8 }}>
-          <Text variant="xLarge" styles={{ root: { fontWeight: 600, color: '#323130' } }}>
-            Hospital Management
-          </Text>
-        </Stack>
+      <Stack tokens={{ childrenGap: 16 }} styles={{ root: { padding: 0, minHeight: '100vh', position: 'relative' } }}>
+          {/* Header with Hospital button on same line */}
+          <Stack horizontal tokens={{ childrenGap: 16 }} verticalAlign="center">
+              <Text variant="xLarge" styles={{ root: { fontWeight: 600, color: '#323130' } }}>
+                  Hospital Management
+              </Text>
 
-        {/* Action Bar */}
-        <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-          <PrimaryButton
-              text="Hospital"
-              iconProps={{ iconName: 'Add' }}
-              onClick={handleCreateHospital}
-              styles={{
-                root: {
-                  borderRadius: 4,
-                  padding: '0 20px',
-                }
-              }}
-          />
-        </Stack>
+              <PrimaryButton
+                  text="Add Hospital"
+
+                  onClick={handleCreateHospital}
+                  styles={{
+                      root: {
+                          borderRadius: 4,
+                          padding: '0 20px',
+                          marginLeft: '60px',
+                      }
+                  }}
+              />
+          </Stack>
           {/* Search Bar */}
-          <Stack horizontal tokens={{ childrenGap: 10 }} verticalAlign="end">
-              <Stack.Item grow>
-                  <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign="end">
-                      {/* Search Type Dropdown */}
-                      <div style={{ width: 140 }}>
-                          <select
-                              value={searchType}
-                              onChange={(e) => setSearchType(e.target.value)}
-                              style={{
-                                  width: '100%',
-                                  padding: '6px 12px',
-                                  borderRadius: '4px',
-                                  border: '1px solid #8a8886',
-                                  fontSize: '14px',
-                                  backgroundColor: 'white',
-                              }}
-                          >
-                              <option value="name">Hospital Name</option>
-                              <option value="code">Hospital Code</option>
-                          </select>
-                      </div>
+          <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign="center">
+              {/* Search Type Dropdown */}
+              <div style={{ width: 140 }}>
+                  <select
+                      value={searchType}
+                      onChange={(e) => setSearchType(e.target.value)}
+                      style={{
+                          width: '100%',
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          border: '1px solid #8a8886',
+                          fontSize: '14px',
+                          backgroundColor: 'white',
+                      }}
+                  >
+                      <option value="name">Hospital Name</option>
+                      <option value="code">Hospital Code</option>
+                  </select>
+              </div>
 
-                      {/* Search Input */}
-                      <div style={{ flex: 1 }}>
-                          <input
-                              type="text"
-                              placeholder={`Search by ${searchType === 'name' ? 'hospital name' : 'hospital code'}...`}
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                              style={{
-                                  padding: '6px 12px',
-                                  width: 'calc(100% - 300px)',
-                                  borderRadius: '4px',
-                                  border: '1px solid #8a8886',
-                                  fontSize: '14px',
-                              }}
-                          />
-                      </div>
+              {/* Search Input - Reduced width */}
+              <div>
+                  <input
+                      type="text"
+                      placeholder={`Search by ${searchType === 'name' ? 'hospital name' : 'hospital code'}...`}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{
+                          padding: '6px 12px',
+                          width: '250px', // Fixed width matching placeholder
+                          borderRadius: '4px',
+                          border: '1px solid #8a8886',
+                          fontSize: '14px',
+                          marginLeft: '0', // No left margin
+                      }}
+                  />
+              </div>
 
-                      {/* Search Button */}
-                      <PrimaryButton
-                          text="Search"
-                          onClick={() => fetchHospitals()}
-                          styles={{
-                              root: {
-                                  borderRadius: 4,
-                                  padding: '0 20px',
-                                  marginLeft: '10px',
-                              }
-                          }}
-                      />
+              {/* Search Button - Next to search input */}
+              <PrimaryButton
+                  text="Search"
+                  onClick={() => fetchHospitals()}
+                  styles={{
+                      root: {
+                          borderRadius: 4,
+                          padding: '0 20px',
+                          marginLeft: '8px', // Small gap from search box
+                      }
+                  }}
+              />
 
-                      {/* Clear Button (only show when there's a search term) */}
-                      {searchTerm && (
-                          <DefaultButton
-                              text="Clear"
-                              onClick={() => {
-                                  setSearchTerm("");
-                                  fetchHospitals();
-                              }}
-                              styles={{
-                                  root: {
-                                      borderRadius: 4,
-                                      padding: '0 20px',
-                                  }
-                              }}
-                          />
-                      )}
-                  </Stack>
-              </Stack.Item>
+              {/* Clear Button (only show when there's a search term) */}
+              {searchTerm && (
+                  <DefaultButton
+                      text="Clear"
+                      onClick={() => {
+                          setSearchTerm("");
+                          fetchHospitals();
+                      }}
+                      styles={{
+                          root: {
+                              borderRadius: 4,
+                              padding: '0 20px',
+                              marginLeft: '8px',
+
+                          }
+                      }}
+                  />
+              )}
           </Stack>
 
         {/* Loading State */}
@@ -214,11 +211,13 @@ export default function HospitalList() {
 
         {/* Data Table */}
         {!loading && hospitals.length > 0 && (
+            <Stack styles={{ root: { width: '100%', margin: 0, padding: 0 } }}>
             <HospitalTable
                 hospitals={hospitals}
                 onEditHospital={handleEditHospital}
                 onViewDicom={handleViewDicom}
             />
+            </Stack>
         )}
 
         {/* Create/Edit Hospital Form Modal */}
@@ -226,18 +225,23 @@ export default function HospitalList() {
             isOpen={showForm}
             onDismiss={handleFormCancel}
             isBlocking={true}
+            scrollable={false}
+            scrollableContentClassName=""
             styles={{
-              main: {
-                maxWidth: 650,
-                width: '90%',
-                borderRadius: 8,
-                padding: 0,
-              },
-              scrollableContent: {
-                maxHeight: '90vh',
-                overflow: 'auto',
-              }
-            }}
+                main:{
+                    maxWidth: 600,        // new width
+                    width: '90%',         // responsive on small screens
+                    borderRadius: 6,     // rounded modal
+                    padding: 0
+                },
+                scrollableContent: {
+                        overflow: 'visible',
+                        height: 'auto',
+                        maxHeight: 'none',
+                        padding: 0,
+                        margin: 0
+
+                    }}}
         >
           <HospitalForm
               hospital={selectedHospital}
