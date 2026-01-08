@@ -250,142 +250,173 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
             isOpen={isOpen}
             onDismiss={onDismiss}
             isBlocking={false}
-            styles={{  main: {
+            styles={{
+                main: {
                     maxWidth: 1100,
                     width: '95%',
                     borderRadius: 8,
-                    minHeight: 600,
                     padding: 0,
-                    margin: 0
-                },
-                root: {
-                    padding: 0,
-                    margin: 0
+                    margin: 0,
+                    maxHeight: '95vh',
+                    minHeight: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column'
                 },
                 scrollableContent: {
                     padding: 0,
-                    margin: 0
-                } }}
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1
+                }
+            }}
         >
-            <div style={{ padding: 0, margin: 0 }}>
-                <Stack tokens={{ childrenGap: 20 }} styles={{
+            <Stack
+                tokens={{ childrenGap: 8 }} // Reduced from 20
+                styles={{
                     root: {
-                        padding: 20,
-                        margin: 0
+                        padding: '0 20px 20px 20px', // NO top padding, only bottom
+                        margin: 0,
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        '& > :not(:first-child)': {
+                            marginTop: '0 !important'
+                        }
                     }
+                }}
+            >
+                {/* Header section - with minimal spacing */}
+                <div style={{
+                    paddingTop: 6, // Small top padding instead of margin
+                    paddingBottom: 6,
+                    margin: 0,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
                 }}>
-
-            <Stack tokens={{ childrenGap: 20 }} styles={{ root: { padding: 20,margin: 0 } }}>
-                <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
                     <Text variant="xLarge" styles={{ root: { fontWeight: 600 } }}>
                         DICOM Management
                     </Text>
                     <IconButton iconProps={{ iconName: 'Cancel' }} onClick={onDismiss} />
-                </Stack>
-                {toastMessage && (
-                    <div style={{
-                        position: 'fixed',
-                        top: 20,
-                        right: 20,
-                        zIndex: 1000,
-                        minWidth: 300,
-                        maxWidth: 400,
-                        animation: 'fadeIn 0.3s ease-in'
-                    }}>
+                </div>
+
+                <Separator styles={{ root: { margin: 0, padding: 0 } }} />
+
+                {/* Content area */}
+                <div style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    margin: 0,
+                    padding: 0
+                }}>
+                    {/* Loading State */}
+                    {isLoading && (
+                        <Stack horizontalAlign="center" verticalAlign="center" style={{
+                            height: 200,
+                            margin: 0,
+                            padding: 0
+                        }}>
+                            <Spinner label="Loading DICOM data..." size={SpinnerSize.medium} />
+                        </Stack>
+                    )}
+
+                    {/* Error Message */}
+                    {error && !isLoading && (
                         <MessageBar
-                            messageBarType={toastMessage.type === 'success' ? MessageBarType.success : MessageBarType.error}
-                            onDismiss={() => setToastMessage(null)}
-                            dismissButtonAriaLabel="Close"
+                            messageBarType={MessageBarType.error}
+                            onDismiss={() => setError(null)}
                             styles={{
                                 root: {
-                                    borderRadius: 4,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                    marginBottom: 10,
+                                    marginTop: 0 // Ensure no top margin
                                 }
                             }}
                         >
-                            {toastMessage.text}
+                            {error}
                         </MessageBar>
-                    </div>
-                )}
+                    )}
 
-                <Separator />
-
-                {/* Loading State */}
-                {isLoading && (
-                    <Stack horizontalAlign="center" verticalAlign="center" style={{ height: 300 }}>
-                        <Spinner label="Loading DICOM data..." size={SpinnerSize.medium} />
-                    </Stack>
-                )}
-
-                {/* Error Message */}
-                {error && !isLoading && (
-                    <MessageBar
-                        messageBarType={MessageBarType.error}
-                        onDismiss={() => setError(null)}
-                        styles={{ root: { marginBottom: 16 } }}
-                    >
-                        {error}
-                    </MessageBar>
-                )}
-
-                {/* SCENARIO B: Upload Interface (when no DICOM or error) */}
-                {showUpload && !isLoading && (
-                    <Stack tokens={{ childrenGap: 20 }}>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".dcm"
-                            onChange={handleFileSelect}
-                            style={{ display: 'none' }}
-                        />
-
+                    {/* SCENARIO B: Upload Interface */}
+                    {showUpload && !isLoading && (
                         <Stack
-                            horizontalAlign="center"
-                            verticalAlign="center"
-                            tokens={{ childrenGap: 16 }}
+                            tokens={{ childrenGap: 10 }}
                             styles={{
                                 root: {
-                                    padding: 60,
-                                    border: '2px dashed #c7e0f4',
-                                    borderRadius: 4,
-                                    backgroundColor: '#f3f2f1',
-                                    // Removed cursor: 'pointer' from here
+                                    margin: 0,
+                                    padding: 0,
+                                    flex: 1,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center' // Center vertically
                                 }
                             }}
-                            // Removed onClick handler from here
                         >
-                            <span style={{ fontSize: 64, color: '#0078d4' }}>📤</span>
-                            <Stack horizontalAlign="center" tokens={{ childrenGap: 8 }}>
-                                <Text variant="large" styles={{ root: { fontWeight: 600 } }}>
-                                    Ready to upload DICOM file
-                                </Text>
-                                <Text variant="medium" styles={{ root: { color: '#605e5c' } }}>
-                                    Supports .dcm files only
-                                </Text>
-                                {/* Add a clickable button here */}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".dcm"
+                                onChange={handleFileSelect}
+                                style={{ display: 'none' }}
+                            />
 
-                            </Stack>
-                        </Stack>
-                        <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 12 }}>
-                            <PrimaryButton
-                                onClick={() => fileInputRef.current?.click()}
-                                styles={{ root: { marginTop: 15 ,minWidth: 150} }}
+                            <Stack
+                                horizontalAlign="center"
+                                verticalAlign="center"
+                                tokens={{ childrenGap: 10 }}
+                                styles={{
+                                    root: {
+                                        padding: 40,
+                                        border: '2px dashed #c7e0f4',
+                                        borderRadius: 4,
+                                        backgroundColor: '#f3f2f1',
+                                        margin: '10px 0'
+                                    }
+                                }}
                             >
-                                Upload File
-                            </PrimaryButton>
-                        </Stack>
-
-                        {isUploading && (
-                            <Stack horizontalAlign="center">
-                                <Spinner label="Uploading..." size={SpinnerSize.medium} />
+                                <span style={{ fontSize: 64, color: '#0078d4' }}>📤</span>
+                                <Stack horizontalAlign="center" tokens={{ childrenGap: 8 }}>
+                                    <Text variant="large" styles={{ root: { fontWeight: 600 } }}>
+                                        Ready to upload DICOM file
+                                    </Text>
+                                    <Text variant="medium" styles={{ root: { color: '#605e5c' } }}>
+                                        Supports .dcm files only
+                                    </Text>
+                                </Stack>
                             </Stack>
-                        )}
-                    </Stack>
-                )}
 
-                {/* SCENARIO A: DICOM View (when has DICOM file) */}
-                {!showUpload && dicomData?.hasFile && (
-                    <Stack tokens={{ childrenGap: 24 }}>
+                            <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 12 }}>
+                                <PrimaryButton
+                                    onClick={() => fileInputRef.current?.click()}
+                                    styles={{ root: { minWidth: 120 } }}
+                                >
+                                    Upload File
+                                </PrimaryButton>
+                            </Stack>
+
+                            {isUploading && (
+                                <Stack horizontalAlign="center">
+                                    <Spinner label="Uploading..." size={SpinnerSize.medium} />
+                                </Stack>
+                            )}
+                        </Stack>
+                    )}
+
+                    {/* SCENARIO A: DICOM View */}
+                    {!showUpload && dicomData?.hasFile && (
+                        <Stack
+                            tokens={{ childrenGap: 24 }}
+                            styles={{
+                                root: {
+                                    margin: 0,
+                                    padding: 0,
+                                    flex: 1,
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                }
+                            }}
+                        >
                         {/* Horizontal Layout for Image and Data */}
                         <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { alignItems: 'flex-start' } }}>
                             {/* Left Side: DICOM Image */}
@@ -481,13 +512,13 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                         {/* Replace/Add New Button */}
                         <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 12 }}>
 
-                            <DefaultButton onClick={onDismiss}  styles={{ root: { minWidth: 150 } }}>Close</DefaultButton>
+                            <DefaultButton onClick={onDismiss}  styles={{ root: { minWidth: 120 } }}>Close</DefaultButton>
                             <PrimaryButton
                                 onClick={() => {
                                     setShowUpload(true);
                                     setError(null);
                                 }}
-                                styles={{ root: { minWidth: 150 } }}
+                                styles={{ root: { minWidth: 120 } }}
                             >
                                 Upload
                             </PrimaryButton>
@@ -497,9 +528,9 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                 )}
 
 
+                </div>
             </Stack>
-                </Stack>
-            </div>
+
         </Modal>
     );
 };

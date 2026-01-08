@@ -5,7 +5,7 @@ const cellStyles = mergeStyles({
     color: '#323130',
 });
 
-export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }) {
+export default function HospitalTable({ hospitals, onEditHospital, onViewDicom , onDeleteHospital}) {
 
     const columns = [
         {
@@ -259,6 +259,29 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
                         }}
                         onClick={() => onEditHospital && onEditHospital(item)}
                     />
+                    <IconButton
+                        iconProps={{ iconName: 'Delete' }}
+                        title="Delete Hospital"
+                        ariaLabel="Delete Hospital"
+                        styles={{
+                            root: {
+                                height: 32,
+                                width: 32,
+                                color: '#0078d4',
+                                backgroundColor: 'transparent',
+                                ':hover': {
+                                    backgroundColor: '#0078d4',
+                                    color: 'white'
+                                }
+                            },
+                            icon: {
+                                fontSize: 14,
+                            }
+                        }}
+                        onClick={() => onDeleteHospital && onDeleteHospital(item)}
+                    />
+
+
                 </Stack>
             ),
         },
@@ -275,22 +298,6 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom }
                     padding: 0,
                 }
             }}>
-                <Icon iconName="Hospital" styles={{
-                    root: {
-                        fontSize: 18,
-                        color: '#0078d4',
-                        marginRight: 6
-                    }
-                }} />
-                <Text variant="mediumPlus" styles={{
-                    root: {
-                        margin: 0,
-                        padding: 0,
-                        fontWeight: 600
-                    }
-                }}>
-                    {hospitals.length}:Registered Hospitals ()
-                </Text>
             </Stack>
 
             {/* Table */}

@@ -9,3 +9,6 @@ export const createHospitalApi =(payload)=>
 
 export const updateHospitalApi = (hospitalId, payload) =>
     axiosClient.put(`/hospital/${hospitalId}`, payload);
+
+export const deleteHospitalApi = (hospitalId) =>
+    axiosClient.delete(`/hospital/deleteHospital/${hospitalId}`);

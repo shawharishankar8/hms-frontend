@@ -7,10 +7,10 @@ import {
     DefaultButton,
     MessageBar,
     MessageBarType,
-    Label,
+    Label, IconButton,
 } from "@fluentui/react";
 import { createHospitalApi, updateHospitalApi } from "../api/hospitalApi";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function HospitalForm({ hospital, mode = 'create', onSuccess, onCancel }) {
     const {
@@ -121,36 +121,21 @@ export default function HospitalForm({ hospital, mode = 'create', onSuccess, onC
             }}
             tokens={{ childrenGap: 12 }}
         >
-            <DefaultButton onClick={onCancel}
-            styles={{
-                    root: {
-                        position: 'absolute',
-                        top: 35,
-                        right: 20,
-                        minWidth: 'auto',
-                        width: 32,
-                        height: 32,
-                        borderRadius: 4,
-                        padding: 0,
-                        backgroundColor: 'transparent',
-                        color: '#d13438',
-                        border: '1px solid #d13438',
-                        ':hover': {
-                            backgroundColor: '#fff4f4',
-                            color: '#a4262c',
-                            borderColor: '#a4262c'
-                        },
-                        ':active': {
-                            backgroundColor: '#eaeaea',
-                        }
-                    }
-            }}
-                           iconProps={{iconName:'cancel',style:{root:{fontSize:16}}}}
-                           ariaLabel="Close"
+            <IconButton
+                onClick={onCancel}
+                style={{
+                    position: 'absolute',
+                    top: 35,
+                    right: 20
+                }}
+                iconProps={{ iconName: 'Cancel' }}
+                ariaLabel="Close"
             />
             <Text variant="xLarge" styles={{ root: { fontWeight: 600, marginBottom: 4 } }}>
                 {mode === 'edit' ? 'Edit Hospital' : 'Create New Hospital'}
             </Text>
+
+
 
             {mode === 'edit' && hospital && (
                 <Text variant="small" styles={{ root: { color: '#605e5c', marginBottom: 12 } }}>
