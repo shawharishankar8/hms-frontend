@@ -216,18 +216,25 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom ,
                 <Stack horizontal tokens={{ childrenGap: 8 }}>
                     {/* DICOM File Icon */}
                     <IconButton
-                        iconProps={{ iconName: 'FileImage' }}
-                        title="View/Upload DICOM"
-                        ariaLabel="View/Upload DICOM"
+                        iconProps={{
+                            iconName: 'FileImage',
+                            styles: {
+                                root: {
+                                    color: item.hasDicomFile ? '#107c10' : '#0078d4',
+                                    fontSize: 14,
+                                }
+                            }
+                        }}
+                        title={item.hasDicomFile ? 'View/Update DICOM' : 'Upload DICOM'}
+                        ariaLabel={item.hasDicomFile ? 'View or update DICOM file' : 'Upload DICOM file'}
                         styles={{
                             root: {
                                 height: 32,
                                 width: 32,
-                                color: '#0078d4',
                                 backgroundColor: 'transparent',
                                 ':hover': {
-                                    backgroundColor: '#0078d4',
-                                    color: 'white'
+                                    backgroundColor: item.hasDicomFile ? '#dff6dd' : '#e1f5fe',
+                                    color: item.hasDicomFile ? '#0b6b0b' : '#005a9e',
                                 }
                             },
                             icon: {

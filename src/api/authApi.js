@@ -14,5 +14,5 @@ export const refreshTokenApi = (refreshToken) =>
     { headers: { "Refresh-Token": refreshToken } }
   );
 
-  export const logoutApi =()=>
+export const logoutApi = () =>
     axiosClient.post("/api/auth/logout");

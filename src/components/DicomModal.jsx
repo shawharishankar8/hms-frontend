@@ -16,7 +16,7 @@ import {
 import axiosClient from '../api/axiosClient';
 import DicomViewer from "./DicomViewer.jsx";// Import your axios client
 
-const DicomModal = ({ isOpen, onDismiss, hospital }) => {
+const DicomModal = ({ isOpen, onDismiss, hospital,onUploadComplete }) => {
     const [dicomData, setDicomData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -115,10 +115,24 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
     };
 
     const handleUpload = async (file) => {
+
+
         if (!hospitalId) {
             setError('Hospital ID is missing');
             return;
+
         }
+        if (!file.name.toLowerCase().endsWith('.dcm')) {
+            setToastMessage('Please select a valid .dcm file');
+            return;
+        }
+
+        // Check if file is actually a DICOM file (basic check)
+        if (file.type && file.type !== 'application/dicom' && !file.type.includes('dicom')) {
+            setToastMessage('Invalid file type. Please select a valid DICOM (.dcm) file.');
+            return;
+        }
+
 
         setIsUploading(true);
         setError(null);
@@ -127,12 +141,17 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
         formData.append('file', file);
 
         try {
-            // Step 1: Upload the file
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
             const response = await axiosClient.post(`/hospital/${hospitalId}/dicom`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                }
+                },
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             const result = response.data;
             console.log('DICOM upload success:', result);
@@ -159,9 +178,14 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                 setDicomData(newDicomData);
                 setShowUpload(false);
                 setToastMessage({ type: 'success', text: 'DICOM file uploaded successfully!' });
+                if (onUploadComplete && hospitalId) {
+                    onUploadComplete(hospitalId);
+                }
+
 
             } catch (fetchErr) {
                 console.error('Failed to fetch after upload:', fetchErr);
+
                 // Fallback: Use upload response even without Base64
                 const newDicomData = {
                     hasFile: true,
@@ -172,22 +196,48 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
                 setDicomData(newDicomData);
                 setShowUpload(false);
                 setError('Upload successful, but could not load image preview. Refresh to view.');
+                if (onUploadComplete && hospitalId) {
+                    onUploadComplete(hospitalId);
+                }
             }
 
         } catch (err) {
+
+            if (err.name === 'AbortError' || err.code === 'ECONNABORTED') {
+                setError('Upload timeout. The file might be too large or invalid.');
+                return;
+            }
             console.error('DICOM upload error:', err.response?.status, err.message);
-            if (err.response?.status === 403) {
-                setToastMessage('Access forbidden. You may not have permission to upload DICOM files.');
+            console.error('DICOM upload error:', err.response?.status, err.message);
+
+            // ADD SPECIFIC HANDLING FOR 400 BAD REQUEST
+            if (err.response?.status === 400) {
+                // This is likely an invalid DICOM file
+                setError('Invalid DICOM file. The file must be a valid DICOM format.');
+                setToastMessage({
+                    type: 'error',
+                    text: 'Invalid DICOM file format. Please upload a valid .dcm file.'
+                });
             } else if (err.response?.status === 401) {
-                setToastMessage('Please log in to upload DICOM files.');
+                // This is handled by the interceptor, but we need to prevent double handling
+                console.log('401 error - interceptor will handle redirect');
+                // Don't set error/toast here as interceptor will redirect
+
+            } else if (err.response?.status === 403) {
+                setToastMessage({
+                    type: 'error',
+                    text: 'Access forbidden. You may not have permission to upload DICOM files.'
+                });
             } else {
-                setToastMessage('Upload failed. Please try again.');
+                setError('Upload failed. Please try again.');
+                setToastMessage({
+                    type: 'error',
+                    text: 'Upload failed. Please try again.'
+                });
             }
         } finally {
             setIsUploading(false);
         }
-
-
 
     };
     // Helper to convert Base64 to Cornerstone imageId
@@ -235,8 +285,22 @@ const DicomModal = ({ isOpen, onDismiss, hospital }) => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Clear previous file input
+        e.target.value = null;
+
         if (!file.name.toLowerCase().endsWith('.dcm')) {
             setError('Please select a .dcm file');
+            return;
+        }
+
+        // Additional validation
+        if (file.size === 0) {
+            setError('File is empty');
+            return;
+        }
+
+        if (file.size > 100 * 1024 * 1024) { // 100MB limit
+            setError('File size must be less than 100MB');
             return;
         }
 

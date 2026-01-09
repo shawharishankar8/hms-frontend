@@ -5,6 +5,8 @@ import {
     PrimaryButton,
     MessageBar,
     MessageBarType,
+    Label,
+    DefaultButton,
 } from "@fluentui/react";
 import { useState, useEffect } from "react";
 import { registerApi } from "../api/authApi";
@@ -13,29 +15,75 @@ import { useNavigate, Link } from "react-router-dom";
 const cardStyles = {
     root: {
         background: "#FFFFFF",
-        padding: "40px 60px",
-        borderRadius: "24px",
-        boxShadow: "0 10px 40px rgba(0,0,0,0.04)",
+        padding: "24px 32px", // Reduced from 40px 60px
+        borderRadius: "12px", // Reduced from 24px
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)", // Lighter shadow
         width: "100%",
-        maxWidth: "450px",
+        maxWidth: "420px", // Slightly reduced
     },
 };
 
+// HospitalForm-like styles
 const inputStyles = {
+    root: {
+        width: '100%',
+        marginBottom: 2,
+    },
     fieldGroup: {
-        borderRadius: "8px",
-        border: "1px solid #E1E1E1",
-        height: "45px",
-        background: "#F9FAFB",
-        transition: "border-color 0.2s ease",
+        height: '32px',
+        borderRadius: '2px',
+        border: '1px solid rgb(138, 136, 134)',
+        backgroundColor: 'transparent',
+        transition: 'border-color 0.2s',
+        selectors: {
+            ':hover': {
+                borderColor: 'rgb(50, 49, 48)',
+            },
+            ':focus': {
+                borderColor: 'rgb(0, 120, 212)',
+                outline: '1px solid rgb(0, 120, 212)'
+            },
+            ':focus-within': {
+                borderColor: 'rgb(0, 120, 212)'
+            },
+            '.ms-TextField.is-disabled &': {
+                borderColor: 'rgb(225, 223, 221)'
+            }
+        }
     },
     field: {
-        fontSize: "14px",
-        lineHeight: "20px",
+        fontSize: '14px',
+        lineHeight: '20px',
+        color: 'rgb(50, 49, 48)',
+        padding: '0 8px'
+    },
+    label: {
+        fontSize: '14px',
+        fontWeight: 600,
+        color: 'rgb(50, 49, 48)',
+        marginBottom: '4px',
+        display: 'block',
+        padding: '0'
     },
     errorMessage: {
-        marginTop: "4px",
-        fontSize: "12px",
+        fontSize: '12px',
+        color: '#a4262c',
+        marginTop: '2px'
+    }
+};
+
+// Error state styles (matches HospitalForm error styling)
+const errorFieldStyles = {
+    fieldGroup: {
+        borderColor: '#a4262c !important',
+        selectors: {
+            ':hover': {
+                borderColor: '#a4262c',
+            },
+            ':focus': {
+                borderColor: '#a4262c',
+            }
+        }
     }
 };
 
@@ -53,11 +101,10 @@ const imageContainerStyles = {
 
 const glowingImageStyles = {
     width: '100%',
-    maxWidth: '550px',
+    maxWidth: '500px', // Reduced slightly
     height: 'auto',
-    filter: 'drop-shadow(0 0 20px rgba(0, 194, 255, 0.3)) drop-shadow(0 0 35px rgba(0, 194, 255, 0.15))',
-    borderRadius: '12px',
-    transition: 'filter 0.3s ease',
+    filter: 'drop-shadow(0 0 15px rgba(0, 194, 255, 0.2))', // Reduced glow
+    borderRadius: '8px', // Reduced
 };
 
 // Validation patterns matching your backend
@@ -106,40 +153,45 @@ export default function Register() {
                 [fieldName]: ''
             }));
         }
+
+        // Clear any general message
+        if (message) {
+            setMessage(null);
+        }
     };
 
     const validateForm = () => {
         const newErrors = {};
 
-        // Name validation
+        // Name validation (matches HospitalForm pattern)
         if (!formData.name.trim()) {
-            newErrors.name = "The name cannot be empty";
+            newErrors.name = "Full name is required";
         } else if (formData.name.trim().length < 3) {
-            newErrors.name = "Name must be at least 3 characters";
+            newErrors.name = "Minimum 3 characters required";
         } else if (formData.name.trim().length > 50) {
-            newErrors.name = "Name cannot exceed 50 characters";
+            newErrors.name = "Maximum 50 characters allowed";
         } else if (!VALIDATION_PATTERNS.name.test(formData.name.trim())) {
             newErrors.name = "Name can only contain alphabets and spaces";
         }
 
         // Username validation
         if (!formData.username.trim()) {
-            newErrors.username = "Username cannot be empty";
+            newErrors.username = "Username is required";
         } else if (formData.username.trim().length < 3) {
-            newErrors.username = "Username must be at least 3 characters";
+            newErrors.username = "Minimum 3 characters required";
         } else if (formData.username.trim().length > 50) {
-            newErrors.username = "Username cannot exceed 50 characters";
+            newErrors.username = "Maximum 50 characters allowed";
         } else if (!VALIDATION_PATTERNS.username.test(formData.username.trim())) {
             newErrors.username = "Username can contain only letters, numbers and @";
         }
 
         // Password validation
         if (!formData.password) {
-            newErrors.password = "Password cannot be empty";
+            newErrors.password = "Password is required";
         } else if (formData.password.length < 8) {
-            newErrors.password = "Password must be at least 8 characters";
+            newErrors.password = "Minimum 8 characters required";
         } else if (!VALIDATION_PATTERNS.password.test(formData.password)) {
-            newErrors.password = "Password must contain: 1 uppercase, 1 lowercase, 1 number, and 1 special character";
+            newErrors.password = "Must contain: uppercase, lowercase, number, and special character";
         }
 
         // Confirm password validation
@@ -221,6 +273,10 @@ export default function Register() {
         }
     };
 
+    const handleCancel = () => {
+        navigate("/login");
+    };
+
     return (
         <Stack
             horizontal
@@ -235,192 +291,311 @@ export default function Register() {
                 },
             }}
         >
-            <Stack styles={{ root: { position: 'absolute', top: 40, left: 60 } }} horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
-                <div style={{ width: 24, height: 24, backgroundColor: '#00C2FF', borderRadius: 6 }} />
-                <Text variant="large" styles={{ root: { fontWeight: 700, color: '#1A1C1E' } }}>HMS</Text>
+            {/* Logo - Made smaller and moved closer to top */}
+            <Stack styles={{
+                root: {
+                    position: 'absolute',
+                    top: 24,
+                    left: 24,
+                    zIndex: 10
+                }
+            }} horizontal verticalAlign="center" tokens={{ childrenGap: 6 }}>
+                <div style={{ width: 20, height: 20, backgroundColor: '#00C2FF', borderRadius: 4 }} />
+                <Text variant="medium" styles={{ root: { fontWeight: 700, color: '#1A1C1E', fontSize: '16px' } }}>HMS</Text>
             </Stack>
 
             <Stack
                 horizontal
                 verticalAlign="center"
-                tokens={{ childrenGap: 100 }}
-                styles={{ root: { width: '100%', maxWidth: '1200px' } }}
+                tokens={{ childrenGap: 80 }} // Reduced from 100
+                styles={{ root: { width: '100%', maxWidth: '1100px' } }} // Reduced max width
             >
                 <Stack styles={cardStyles}>
                     <form onSubmit={onSubmit} noValidate>
-                        <Stack tokens={{ childrenGap: 10 }}>
-                            <Text variant="xxLarge" styles={{
-                                root: {
-                                    textAlign: 'center',
-                                    fontWeight: 700,
-                                    marginBottom: 0,
-                                }
-                            }}>
-                                Register
-                            </Text>
-
-                            <Text variant="small" styles={{
-                                root: {
-                                    textAlign: 'center',
-                                    color: '#605e5c',
-                                    marginBottom: 16,
-                                    marginTop:6
-                                }
-                            }}>
-                                Create your account to get started
-                            </Text>
-
-                            {/* Name Field - CONTROLLED */}
-                            <Stack tokens={{ childrenGap: 4 }}>
-                                <div style={{ minHeight: 70 }}>
-                                <TextField
-                                    placeholder="Full Name "
-                                    value={formData.name}
-                                    onChange={(e, value) => handleInputChange('name', value)}
-                                    errorMessage={errors.name}
-                                    required
-                                    styles={{
-                                        ...inputStyles,
-                                        root: {
-                                            width: '100%',
-                                        }
-                                    }}
-
-                                    onKeyDown={(e) => {
-                                        // Debug key presses
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                        }
-                                    }}
-                                />
-                                <Text variant="small" styles={{
+                        <Stack tokens={{ childrenGap: 16 }}> {/* Reduced from 20 */}
+                            {/* Header - More compact */}
+                            <Stack tokens={{ childrenGap: 4 }}> {/* Reduced spacing */}
+                                <Text variant="xLarge" styles={{
                                     root: {
-                                        color: '#605e5c',
-                                        fontSize: '11px',
-                                        lineHeight: '14px',
-                                        marginTop: '4px',
-                                        paddingLeft: '4px',
+                                        textAlign: 'center',
+                                        fontWeight: 600,
+                                        color: '#323130',
+                                        fontSize: '20px', // Slightly smaller
+                                        margin: 0,
+                                        padding: 0
                                     }
                                 }}>
-
+                                    Register
                                 </Text>
-                                    </div>
+
+                                <Text variant="small" styles={{
+                                    root: {
+                                        textAlign: 'center',
+                                        color: '#605e5c',
+                                        fontSize: '12px',
+                                        margin: 0,
+                                        padding: 0
+                                    }
+                                }}>
+                                    Create your account to get started
+                                </Text>
                             </Stack>
 
-                            {/* Username Field - CONTROLLED */}
-                            <Stack tokens={{ childrenGap: 4 }}>
-                                <div style={{ minHeight: 70 }}>
-                                    <TextField
-                                        placeholder="Username"
-                                        value={formData.username}
-                                        onChange={(e, value) => handleInputChange('username', value)}
-                                        errorMessage={errors.username}
+                            {/* Fields - Reduced spacing between them */}
+                            <Stack tokens={{ childrenGap: 12 }}> {/* Reduced from 20 */}
+                                {/* Name Field */}
+                                <div style={{ minHeight: '68px' }}> {/* Reduced from 72px */}
+                                    <Label
                                         required
                                         styles={{
-                                            ...inputStyles,
                                             root: {
-                                                width: '100%',
+                                                fontWeight: 600,
+                                                fontSize: '13px', // Slightly smaller
+                                                marginBottom: '3px',
+                                                color: '#323130',
+                                                padding: '0'
+                                            }
+                                        }}
+                                    >
+                                        Full Name
+                                    </Label>
+                                    <TextField
+                                        placeholder="Enter your full name"
+                                        value={formData.name}
+                                        onChange={(e, value) => handleInputChange('name', value)}
+                                        disabled={isSubmitting}
+                                        styles={{
+                                            root: { width: '100%', marginBottom: 2 },
+                                            fieldGroup: [
+                                                inputStyles.fieldGroup,
+                                                errors.name && errorFieldStyles.fieldGroup
+                                            ],
+                                            field: inputStyles.field,
+                                        }}
+                                    />
+                                    {errors.name && (
+                                        <Text
+                                            variant="small"
+                                            styles={{
+                                                root: {
+                                                    color: '#a4262c',
+                                                    fontSize: '11px',
+                                                    marginTop: '1px',
+                                                    display: 'block'
+                                                }
+                                            }}
+                                        >
+                                            {errors.name}
+                                        </Text>
+                                    )}
+                                </div>
+
+                                {/* Username Field */}
+                                <div style={{ minHeight: '68px' }}>
+                                    <Label
+                                        required
+                                        styles={{
+                                            root: {
+                                                fontWeight: 600,
+                                                fontSize: '13px',
+                                                marginBottom: '3px',
+                                                color: '#323130',
+                                                padding: '0'
+                                            }
+                                        }}
+                                    >
+                                        Username
+                                    </Label>
+                                    <TextField
+                                        placeholder="Enter your username"
+                                        value={formData.username}
+                                        onChange={(e, value) => handleInputChange('username', value)}
+                                        disabled={isSubmitting}
+                                        styles={{
+                                            root: { width: '100%', marginBottom: 2 },
+                                            fieldGroup: [
+                                                inputStyles.fieldGroup,
+                                                errors.username && errorFieldStyles.fieldGroup
+                                            ],
+                                            field: inputStyles.field,
+                                        }}
+                                    />
+                                    {errors.username && (
+                                        <Text
+                                            variant="small"
+                                            styles={{
+                                                root: {
+                                                    color: '#a4262c',
+                                                    fontSize: '11px',
+                                                    marginTop: '1px',
+                                                    display: 'block'
+                                                }
+                                            }}
+                                        >
+                                            {errors.username}
+                                        </Text>
+                                    )}
+                                </div>
+
+                                {/* Password Field */}
+                                <div style={{ minHeight: '68px' }}>
+                                    <Label
+                                        required
+                                        styles={{
+                                            root: {
+                                                fontWeight: 600,
+                                                fontSize: '13px',
+                                                marginBottom: '3px',
+                                                color: '#323130',
+                                                padding: '0'
+                                            }
+                                        }}
+                                    >
+                                        Password
+                                    </Label>
+                                    <TextField
+                                        placeholder="Enter your password"
+                                        type="password"
+                                        value={formData.password}
+                                        onChange={(e, value) => handleInputChange('password', value)}
+                                        canRevealPassword
+                                        disabled={isSubmitting}
+                                        styles={{
+                                            root: { width: '100%', marginBottom: 2 },
+                                            fieldGroup: [
+                                                inputStyles.fieldGroup,
+                                                errors.password && errorFieldStyles.fieldGroup
+                                            ],
+                                            field: inputStyles.field,
+                                            revealButton: {
+                                                height: '28px', // Smaller
+                                                width: '28px',
+                                                backgroundColor: 'transparent',
+                                                selectors: {
+                                                    ':hover': {
+                                                        backgroundColor: '#f3f2f1'
+                                                    }
+                                                }
                                             }
                                         }}
                                     />
+                                    {errors.password && (
+                                        <Text
+                                            variant="small"
+                                            styles={{
+                                                root: {
+                                                    color: '#a4262c',
+                                                    fontSize: '11px',
+                                                    marginTop: '1px',
+                                                    display: 'block'
+                                                }
+                                            }}
+                                        >
+                                            {errors.password}
+                                        </Text>
+                                    )}
+                                </div>
 
-
-                                <Text variant="small" styles={{
-                                    root: {
-                                        color: '#605e5c',
-                                        fontSize: '11px',
-                                        lineHeight: '14px',
-                                        marginTop: '4px',
-                                        paddingLeft: '4px',
-                                    }
-                                }}>
-                                </Text>
+                                {/* Confirm Password Field */}
+                                <div style={{ minHeight: '68px' }}>
+                                    <Label
+                                        required
+                                        styles={{
+                                            root: {
+                                                fontWeight: 600,
+                                                fontSize: '13px',
+                                                marginBottom: '3px',
+                                                color: '#323130',
+                                                padding: '0'
+                                            }
+                                        }}
+                                    >
+                                        Confirm Password
+                                    </Label>
+                                    <TextField
+                                        placeholder="Confirm your password"
+                                        type="password"
+                                        value={formData.confirmPassword}
+                                        onChange={(e, value) => handleInputChange('confirmPassword', value)}
+                                        canRevealPassword
+                                        disabled={isSubmitting}
+                                        styles={{
+                                            root: { width: '100%', marginBottom: 2 },
+                                            fieldGroup: [
+                                                inputStyles.fieldGroup,
+                                                errors.confirmPassword && errorFieldStyles.fieldGroup
+                                            ],
+                                            field: inputStyles.field,
+                                            revealButton: {
+                                                height: '28px',
+                                                width: '28px',
+                                                backgroundColor: 'transparent',
+                                                selectors: {
+                                                    ':hover': {
+                                                        backgroundColor: '#f3f2f1'
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    {errors.confirmPassword && (
+                                        <Text
+                                            variant="small"
+                                            styles={{
+                                                root: {
+                                                    color: '#a4262c',
+                                                    fontSize: '11px',
+                                                    marginTop: '1px',
+                                                    display: 'block'
+                                                }
+                                            }}
+                                        >
+                                            {errors.confirmPassword}
+                                        </Text>
+                                    )}
                                 </div>
                             </Stack>
 
-                            {/* Password Field - CONTROLLED */}
-                            <Stack tokens={{ childrenGap: 4 }}>
-                                <div style={{ minHeight: 70 }}>
-                                <TextField
-                                    placeholder="Password"
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={(e, value) => handleInputChange('password', value)}
-                                    errorMessage={errors.password}
-                                    required
-                                    canRevealPassword
+                            {/* Buttons - More compact */}
+                            <Stack horizontal tokens={{ childrenGap: 8 }} horizontalAlign="end" style={{ marginTop: 16 }}>
+                                <PrimaryButton
+                                    type="submit"
+                                    text={isSubmitting ? "Creating..." : "Register"}
+                                    disabled={isSubmitting}
                                     styles={{
-                                        ...inputStyles,
                                         root: {
-                                            width: '100%',
+                                            height: 36,
+                                            width: 'auto', // Auto width
+                                            minWidth: 120, // Minimum width
+                                            borderRadius: 4,
+                                            padding: '8px 32px', // Reduced horizontal padding
+                                            backgroundColor: '#0078d4',
+                                            fontSize: '16px',
+                                            fontWeight: 600,
+                                            marginTop: 12,
+                                            border: 'none',
+                                            display: 'block',
+                                            marginLeft: 'auto',
+                                            marginRight: 'auto',
+                                            selectors: {
+                                                ':hover': {
+                                                    backgroundColor: '#106ebe',
+                                                },
+                                                ':active': {
+                                                    backgroundColor: '#005a9e',
+                                                }
+                                            }
                                         }
                                     }}
-
                                 />
-                                <Text variant="small" styles={{
-                                    root: {
-                                        color: '#605e5c',
-                                        fontSize: '11px',
-                                        lineHeight: '14px',
-                                        marginTop: '4px',
-                                        paddingLeft: '4px',
-                                    }
-                                }}>
-
-                                </Text>
-                                </div>
                             </Stack>
-
-                            {/* Confirm Password Field - CONTROLLED */}
-                            <Stack tokens={{ childrenGap: 4 }}>
-                                <div style={{ minHeight: 70 }}>
-                                <TextField
-                                    placeholder="Confirm Password"
-                                    type="password"
-                                    value={formData.confirmPassword}
-                                    onChange={(e, value) => handleInputChange('confirmPassword', value)}
-                                    errorMessage={errors.confirmPassword}
-                                    required
-                                    canRevealPassword
-                                    styles={{
-                                        ...inputStyles,
-                                        root: {
-                                            width: '100%',
-                                        }
-                                    }}
-
-                                />
-                                </div>
-                            </Stack>
-
-                            {/* Submit Button */}
-                            <PrimaryButton
-                                text={isSubmitting ? "Creating Account..." : "Register"}
-                                type="submit"
-                                disabled={isSubmitting}
-                                styles={{
-                                    root: {
-                                        height: 50,
-                                        borderRadius: 12,
-                                        backgroundColor: '#005FB8',
-                                        border: 'none',
-                                        marginTop: 8,
-                                        ':hover': {
-                                            backgroundColor: '#001950',
-                                        },
-                                        ':disabled': {
-                                            backgroundColor: '#e1e1e1',
-                                        }
-                                    }
-                                }}
-                            />
 
                             {/* Login Link */}
                             <Text styles={{
                                 root: {
                                     textAlign: 'center',
-                                    fontSize: 13,
-                                    marginTop: 8,
+                                    fontSize: '12px',
+                                    marginTop: 16,
                                 }
                             }}>
                                 Already have an account?{' '}
@@ -430,10 +605,10 @@ export default function Register() {
                                         color: '#005FB8',
                                         fontWeight: 600,
                                         textDecoration: 'none',
-                                        ':hover': {
-                                            textDecoration: 'underline',
-                                        }
+                                        fontSize: '12px'
                                     }}
+                                    onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                                    onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
                                 >
                                     Login here
                                 </Link>
@@ -445,8 +620,9 @@ export default function Register() {
                                     messageBarType={message.type === "error" ? MessageBarType.error : MessageBarType.success}
                                     styles={{
                                         root: {
-                                            marginTop: 16,
-                                            borderRadius: 6,
+                                            marginTop: 12,
+                                            borderRadius: 4,
+                                            fontSize: '12px'
                                         }
                                     }}
                                     onDismiss={message.type === "error" ? () => setMessage(null) : undefined}
@@ -458,7 +634,7 @@ export default function Register() {
                     </form>
                 </Stack>
 
-                {/* Image Container */}
+                {/* Image Container - More compact */}
                 <Stack styles={imageContainerStyles}>
                     <img
                         src="/Login_page.jpg"

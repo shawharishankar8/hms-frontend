@@ -23,6 +23,9 @@ export const getAccessToken = () => {
 export const clearAccessToken = () => {
     accessToken = null;
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('username');
+    localStorage.removeItem('name');
+    console.log('All tokens cleared');
 };
 
 const axiosClient = axios.create({
@@ -34,11 +37,13 @@ axiosClient.interceptors.request.use((config) => {
     console.log('Current accessToken:', accessToken);
 
     // Skip Authorization for auth endpoints
-    if (config.url.includes('/api/auth/')) {
-        console.log('Skipping Authorization header for auth endpoint');
+    if (config.url.includes('/api/auth/login') ||
+        config.url.includes('/api/auth/register') ||
+        config.url.includes('/api/auth/refresh')) {
         return config;
     }
 
+    // For all other endpoints (including logout), add token
     if (accessToken && accessToken !== "undefined" && accessToken !== "null") {
         config.headers.Authorization = `Bearer ${accessToken}`;
         console.log('Added Authorization header');
