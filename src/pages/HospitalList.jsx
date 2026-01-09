@@ -17,6 +17,10 @@ import DicomModal from "../components/DicomModal";
 import { deleteHospitalApi} from "../api/hospitalApi";
 import {logoutApi} from "../api/authApi";
 import {clearAccessToken} from "../api/axiosClient.js";
+import { useAuth } from "../hooks/useAuth";
+
+
+
 
 export default function HospitalList() {
     const [hospitals, setHospitals] = useState([]);
@@ -28,6 +32,15 @@ export default function HospitalList() {
     const [formMode, setFormMode] = useState('create');
     const [searchTerm, setSearchTerm] = useState("");
     const [searchType, setSearchType] = useState("name");
+    const { authState } = useAuth();
+    const username = authState.user?.username || '';
+
+    console.log('AuthState in HospitalList:', authState);
+       
+    // You should add this back:
+useEffect(() => {
+    fetchHospitals();
+}, []);
 
 
 
@@ -61,12 +74,6 @@ export default function HospitalList() {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchHospitals();
-    }, []);
-
-
 
     // Handle Edit Hospital button click
     const handleEditHospital = (hospital) => {
@@ -103,8 +110,6 @@ export default function HospitalList() {
             window.location.href = "/login";
         }
     };
-
-
 
 
     // Handle View/Upload DICOM button click
@@ -154,34 +159,71 @@ export default function HospitalList() {
                 backgroundColor: '#faf9f8'
             }}>
                 {/* Top Row: Title + Logout (right top) */}
-                <Stack horizontal horizontalAlign="space-between" verticalAlign="center" styles={{ root: { marginBottom: 16 } }}>
-                    <Text variant="xLarge" styles={{ root: { fontWeight: 600, color: '#323130' } }}>
-                        Hospital Management
-                    </Text>
+   {/* Top Row: Title + User Info & Logout */}
+<Stack horizontal horizontalAlign="space-between" verticalAlign="center" styles={{ root: { marginBottom: 16 } }}>
+    <Text variant="xLarge" styles={{ root: { fontWeight: 600, color: '#323130' } }}>
+        Hospital Management
+    </Text>
 
-                    {/* Logout Button - right top */}
-                    <PrimaryButton
-                        text="Logout"
-                        onClick={handleLogout} // You'll need to add this function
-                        styles={{
-                            root: {
-                                backgroundColor: '#e1f5fe', // Light blue
-                                color: '#0078d4',
-                                borderRadius: 4,
-                                padding: '0 20px',
-                                height: 32,
-                                border: 'none',
-                                minWidth: 100,
-                                ':hover': {
-                                    backgroundColor: '#b3e5fc', // Darker shade on hover
-                                },
-                                ':active': {
-                                    backgroundColor: '#81d4fa',
-                                }
-                            }
-                        }}
-                    />
-                </Stack>
+    {/* User Info & Logout - right top */}
+    <Stack horizontal tokens={{ childrenGap: 12 }} verticalAlign="center">
+    {username && (
+        <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign="center">
+           
+            
+            {/* User avatar/icon */}
+            <div style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                backgroundColor: '#0078d4',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                flexShrink: 0
+            }}>
+                {username.charAt(0).toUpperCase()}
+            </div>
+            
+            {/* Username text */}
+            <Text variant="medium" styles={{ 
+                root: { 
+                    color: '#605e5c', 
+                    fontWeight: 500,
+                    fontSize: '14px'
+                } 
+            }}>
+                {username}
+            </Text>
+        </Stack>
+    )}
+    
+    <PrimaryButton
+        text="Logout"
+        onClick={handleLogout}
+        styles={{
+            root: {
+                backgroundColor: '#e1f5fe',
+                color: '#0078d4',
+                borderRadius: 4,
+                padding: '0 20px',
+                height: 32,
+                border: 'none',
+                minWidth: 100,
+                ':hover': {
+                    backgroundColor: '#b3e5fc',
+                },
+                ':active': {
+                    backgroundColor: '#81d4fa',
+                }
+            }
+        }}
+    />
+</Stack>
+</Stack>
 
                 {/* Bottom Row: Search (left) + Count & Add Hospital (right) */}
                 <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
