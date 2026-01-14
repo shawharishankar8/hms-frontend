@@ -12,6 +12,7 @@
   "dependencies": {
     "@fluentui/react": "^8.125.3",
     "@fluentui/react-icons": "^2.0.316",
+    "@fluentui/react-icons-mdl2": "^1.4.3",
     "axios": "^1.13.2",
     "cornerstone-core": "^2.6.1",
     "cornerstone-tools": "^6.0.10",

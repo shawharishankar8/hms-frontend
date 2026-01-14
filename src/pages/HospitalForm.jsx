@@ -110,7 +110,7 @@ export default function HospitalForm({ hospital, mode = 'create', onSuccess, onC
             styles={{
                 root: {
                     backgroundColor: 'white',
-                    padding: 24,
+                    padding: 12,
                     borderRadius: 10,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                     maxWidth: 600,
@@ -119,7 +119,7 @@ export default function HospitalForm({ hospital, mode = 'create', onSuccess, onC
                     position:'relative'
                 }
             }}
-            tokens={{ childrenGap: 12 }}
+            tokens={{ childrenGap: 10 }}
         >
             <IconButton
                 onClick={onCancel}
@@ -136,20 +136,17 @@ export default function HospitalForm({ hospital, mode = 'create', onSuccess, onC
             </Text>
 
 
-
             {mode === 'edit' && hospital && (
-                <Text variant="small" styles={{ root: { color: '#605e5c', marginBottom: 12 } }}>
+                <Text variant="small" styles={{ root: { color: '#605e5c', marginBottom: 4 } }}>
                     Hospital Code: {hospital.hospitalCode}
                 </Text>
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                <Stack tokens={{ childrenGap: 20 }}>
+                <Stack tokens={{ childrenGap: 10}}>
 
                     {/* Hospital Information */}
                     <Stack tokens={{ childrenGap: 4 }}>
-                        <Label styles={{ root: { fontWeight: 600, fontSize: 14, marginBottom: 0 } }}>Hospital Information</Label>
-
                         <div style={{ minHeight: '72px' }}>
                             <Controller
                                 name="hospitalName"
@@ -370,14 +367,16 @@ export default function HospitalForm({ hospital, mode = 'create', onSuccess, onC
                             text="Cancel"
                             onClick={onCancel}
                             disabled={loading}
-                            styles={{ root: { minWidth: 80 } }}
+                            styles={{ root: { minWidth: 80 ,borderRadius: 4,
+                                    minWidth: 120,} }}
                         />
                         <PrimaryButton
                             type="submit"
-                            text={loading ? "Saving..." : (mode === 'edit' ? 'Save' : 'Create Hospital')}
+                            text={loading ? "Saving..." : (mode === 'edit' ? 'Save' : 'save')}
                             disabled={loading}
                             styles={{
                                 root: {
+                                    borderRadius: 4,
                                     minWidth: 120,
                                     backgroundColor: mode === 'edit' ? '#0078d4' : '#175cb8',
                                     borderColor: mode === 'edit' ? '#0078d4' : '#175cb8',

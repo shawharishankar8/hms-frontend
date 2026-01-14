@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { loginApi } from "../api/authApi";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate, Link } from "react-router-dom";
+import { setCookie } from "../utils/cookieUtils.js";
 
 const cardStyles = {
     root: {
@@ -148,6 +149,15 @@ export default function Login() {
 
         try {
             const res = await loginApi({username, password});
+
+           console.log('Login response:', res.data);
+        if (res.data?.user?.username) {
+            localStorage.setItem('username', res.data.user.username);
+            console.log('Username stored:', res.data.user.username);
+        } else {
+            console.error('No username in response:', res.data);
+        }
+        
             login(res.data);
             navigate("/hospital");
         } catch {

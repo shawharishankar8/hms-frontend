@@ -1,0 +1,7 @@
+# docker-compose.yml
+services:
+  frontend:
+    build: .
+    ports:
+      - "3000:3000"
+    container_name: hms-frontend

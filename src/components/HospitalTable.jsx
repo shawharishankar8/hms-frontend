@@ -71,22 +71,41 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom ,
                 const formatDateTime = (value) => {
                     if (!value) return "--";
 
-                    const date = new Date(value);
+                    try {
+                        const date = new Date(value);
 
-                    if (isNaN(date.getTime())) return "--";
+                        if (isNaN(date.getTime())) return "--";
 
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    const month = monthNames[date.getMonth()];
-                    const year = String(date.getFullYear()).slice(-2);
 
-                    let hours = date.getHours();
-                    const minutes = String(date.getMinutes()).padStart(2, '0');
-                    const ampm = hours >= 12 ? 'PM' : 'AM';
-                    hours = hours % 12 || 12;
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const month = monthNames[date.getMonth()];
+                        const year = String(date.getFullYear()).slice(-2);
 
-                    return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
+                        // Check if the original value has a time component
+                        const hasTimeComponent = typeof value === 'string' &&
+                            (value.includes('T') || value.includes(':') || value.length > 10);
+
+                        if (!hasTimeComponent) {
+                            // It's a date-only value
+                            return `${day}-${month}-${year}`;
+                        }
+
+                        // Use local time (since you want to display in IST)
+                        let hours = date.getHours();
+                        let minutes = date.getMinutes();
+
+                        const minutesStr = String(minutes).padStart(2, '0');
+                        const ampm = hours >= 12 ? 'PM' : 'AM';
+                        hours = hours % 12 || 12;
+
+                        return `${day}-${month}-${year} ${hours}:${minutesStr} ${ampm}`;
+
+                    } catch (error) {
+                        console.error('Error formatting date:', error, value);
+                        return "--";
+                    }
                 };
 
                 return (
@@ -212,7 +231,10 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom ,
             name: "Actions",
             minWidth: 150,
             maxWidth: 180,
-            onRender: (item) => (
+            onRender: (item) => {
+                console.log('DEBUG - Hospital in table:', item.name, 'hasDicomFile:', item.hasDicomFile);
+    
+                return (
                 <Stack horizontal tokens={{ childrenGap: 8 }}>
                     {/* DICOM File Icon */}
                     <IconButton
@@ -220,7 +242,7 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom ,
                             iconName: 'FileImage',
                             styles: {
                                 root: {
-                                    color: item.hasDicomFile ? '#107c10' : '#0078d4',
+                                    color: item.hasDicomFile ? '#0078d4' : '#7a7e85',
                                     fontSize: 14,
                                 }
                             }
@@ -231,14 +253,20 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom ,
                             root: {
                                 height: 32,
                                 width: 32,
-                                backgroundColor: 'transparent',
+                                backgroundColor:'transparent',
                                 ':hover': {
-                                    backgroundColor: item.hasDicomFile ? '#dff6dd' : '#e1f5fe',
-                                    color: item.hasDicomFile ? '#0b6b0b' : '#005a9e',
+                                    backgroundColor: item.hasDicomFile ? '#deecf9' : '#f3f2f1',
                                 }
                             },
                             icon: {
                                 fontSize: 14,
+                                color: item.hasDicomFile ? '#0078d4' : '#8a8886',
+                            },
+                            rootHovered: {
+                                // Force the icon color on hover
+                                '.ms-Button-icon': {
+                                    color: item.hasDicomFile ? '#0078d4' : '#8a8886 !important',
+                                }
                             }
                         }}
                         onClick={() => onViewDicom && onViewDicom(item)}
@@ -274,10 +302,10 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom ,
                             root: {
                                 height: 32,
                                 width: 32,
-                                color: '#0078d4',
+                                color: '#8f1717',
                                 backgroundColor: 'transparent',
                                 ':hover': {
-                                    backgroundColor: '#0078d4',
+                                    backgroundColor: '#d40000',
                                     color: 'white'
                                 }
                             },
@@ -290,7 +318,8 @@ export default function HospitalTable({ hospitals, onEditHospital, onViewDicom ,
 
 
                 </Stack>
-            ),
+                );
+            },
         },
     ];
 

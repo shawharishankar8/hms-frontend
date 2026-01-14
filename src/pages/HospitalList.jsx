@@ -9,6 +9,12 @@ import {
     Spinner,
     SpinnerSize,
     Modal,
+    Dropdown,
+    SearchBox,
+   Tooltip,
+    TooltipHost,
+    DirectionalHint, 
+    IconButton 
 } from "@fluentui/react";
 import { getHospitalsApi } from "../api/hospitalApi";
 import HospitalTable from "../components/HospitalTable";
@@ -18,8 +24,7 @@ import { deleteHospitalApi} from "../api/hospitalApi";
 import {logoutApi} from "../api/authApi";
 import {clearAccessToken} from "../api/axiosClient.js";
 import { useAuth } from "../hooks/useAuth";
-
-
+import { SignOutIcon } from '@fluentui/react-icons-mdl2';
 
 
 export default function HospitalList() {
@@ -62,11 +67,18 @@ useEffect(() => {
             }
             const res = await getHospitalsApi(params);
 
-            const hospitalsWithDicomStatus = (res.data.data || []).map(hospital => ({
-                ...hospital,
-                hasDicomFile: false // Default to false
-            }));
-            setHospitals(hospitalsWithDicomStatus);
+            
+            // Preserve existing hasDicomFile status when fetching hospitals
+            setHospitals(prevHospitals => {
+                const existingStatusMap = new Map(prevHospitals.map(h => [h.id, h.hasDicomFile]));
+                return (res.data.data || []).map(hospital => ({
+                    ...hospital,
+                    hasDicomFile: existingStatusMap.get(hospital.id) || false
+                }));
+            });
+
+           
+            
         } catch (err) {
             console.error('Error fetching hospitals:', err);
             setError("Failed to fetch hospitals. Please try again.");
@@ -101,12 +113,14 @@ useEffect(() => {
             // Clear all user data
             clearAccessToken();
             localStorage.clear();
+            sessionStorage.clear();
             window.location.href = "/login";
         } catch (e) {
             console.error("Logout failed", e);
             // Even if API fails, still clear local data
             clearAccessToken();
             localStorage.clear();
+            sessionStorage.clear();
             window.location.href = "/login";
         }
     };
@@ -149,209 +163,173 @@ useEffect(() => {
     };
 
 
+    // Dropdown options for search type
+    const searchTypeOptions = [
+        { key: 'name', text: 'Hospital Name' },
+        { key: 'code', text: 'Hospital Code' },
+    ];
+
     return (
         <Stack styles={{ root: { minHeight: '100vh', padding: 0, margin: 0 } }}>
-            {/* Banner/Header - NO extra padding */}
-            <div style={{
-                padding: '16px 24px 12px 24px', // Matches your current spacing
-                margin: 0,
-                borderBottom: '1px solid #e1dfdd',
-                backgroundColor: '#faf9f8'
-            }}>
-                {/* Top Row: Title + Logout (right top) */}
-   {/* Top Row: Title + User Info & Logout */}
-<Stack horizontal horizontalAlign="space-between" verticalAlign="center" styles={{ root: { marginBottom: 16 } }}>
-    <Text variant="xLarge" styles={{ root: { fontWeight: 600, color: '#323130' } }}>
-        Hospital Management
-    </Text>
+            {/* Header Banner - Only Title and User Controls */}
+            <Stack
+                horizontal
+                horizontalAlign="space-between"
+                verticalAlign="center"
+                styles={{
+                    root: {
+                        borderBottom: '1px solid #e1dfdd',
+                        backgroundColor: '#faf9f8',
+                        padding: '5px 5px',
+                    }
+                }}
+            >
+                <Text variant="xLarge" styles={{ root: { fontWeight: 600 } }}>
+                    Hospital Management
+                </Text>
 
-    {/* User Info & Logout - right top */}
-    <Stack horizontal tokens={{ childrenGap: 12 }} verticalAlign="center">
-    {username && (
-        <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign="center">
-           
-            
-            {/* User avatar/icon */}
-            <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                backgroundColor: '#0078d4',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                flexShrink: 0
-            }}>
-                {username.charAt(0).toUpperCase()}
-            </div>
-            
-            {/* Username text */}
-            <Text variant="medium" styles={{ 
-                root: { 
-                    color: '#605e5c', 
-                    fontWeight: 500,
-                    fontSize: '14px'
-                } 
-            }}>
-                {username}
-            </Text>
-        </Stack>
-    )}
-    
-    <PrimaryButton
-        text="Logout"
-        onClick={handleLogout}
-        styles={{
-            root: {
-                backgroundColor: '#e1f5fe',
-                color: '#0078d4',
-                borderRadius: 4,
-                padding: '0 20px',
-                height: 32,
-                border: 'none',
-                minWidth: 100,
-                ':hover': {
-                    backgroundColor: '#b3e5fc',
-                },
-                ':active': {
-                    backgroundColor: '#81d4fa',
-                }
-            }
-        }}
-    />
-</Stack>
-</Stack>
-
-                {/* Bottom Row: Search (left) + Count & Add Hospital (right) */}
-                <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-                    {/* Search Section - left bottom */}
-                    <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign="center">
-                        <div style={{ width: 140 }}>
-                            <select
-                                value={searchType}
-                                onChange={(e) => setSearchType(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '6px 12px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #8a8886',
-                                    fontSize: '14px',
-                                    backgroundColor: 'white',
-                                    height: 32,
-                                }}
-                            >
-                                <option value="name">Hospital Name</option>
-                                <option value="code">Hospital Code</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <input
-                                type="text"
-                                placeholder={`Search by ${searchType === 'name' ? 'hospital name' : 'hospital code'}...`}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                style={{
-                                    padding: '6px 12px',
-                                    width: '250px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #8a8886',
-                                    fontSize: '14px',
-                                    height: 32,
-                                    boxSizing: 'border-box'
-                                }}
-                            />
-                        </div>
-
-                        <PrimaryButton
-                            text="Search"
-                            onClick={() => fetchHospitals()}
-                            styles={{
-                                root: {
-                                    backgroundColor: '#e1f5fe',
-                                    color: '#0078d4',
-                                    borderRadius: 4,
-                                    padding: '0 20px',
-                                    height: 32,
-                                    border: 'none',
-                                    minWidth: 100,
-                                    ':hover': {
-                                        backgroundColor: '#b3e5fc',
-                                    },
-                                    ':active': {
-                                        backgroundColor: '#81d4fa',
-                                    }
-                                }
-                            }}
-                        />
-
-                        {searchTerm && (
-                            <DefaultButton
-                                text="Clear"
-                                onClick={() => {
-                                    setSearchTerm("");
-                                    fetchHospitals();
-                                }}
-                                styles={{
-                                    root: {
-                                        backgroundColor: '#e1f5fe',
-                                        color: '#0078d4',
-                                        borderRadius: 4,
-                                        padding: '0 20px',
-                                        height: 32,
-                                        border: 'none',
-                                        minWidth: 100,
-                                        ':hover': {
-                                            backgroundColor: '#b3e5fc',
-                                        },
-                                        ':active': {
-                                            backgroundColor: '#81d4fa',
-                                        }
-                                    }
-                                }}
-                            />
-                        )}
-                    </Stack>
-
-                    {/* Right Section: Count + Add Hospital - right bottom */}
-                    <Stack horizontal tokens={{ childrenGap: 16 }} verticalAlign="center">
-                        <Text variant="medium" styles={{ root: { color: '#605e5c' } }}>
-                            ({hospitals.length}) Registered Hospital{hospitals.length !== 1 ? 's' : ''}
+                <Stack horizontal tokens={{ childrenGap: 's1' }} verticalAlign="center"  styles={{
+                    root: {
+                            paddingRight: '20px' // Move entire stack left by adding right padding
+                        } }}>
+                    {username && (
+                        <Text variant="medium" styles={{ root: { color: '#605e5c', fontWeight: 500 } }}>
+                            {username}
                         </Text>
-
-                        <PrimaryButton
-                            text="Add Hospital"
-                            onClick={handleCreateHospital}
+                    )}
+                    <TooltipHost
+                        content="Logout"
+                        directionalHint={DirectionalHint.bottomCenter}>
+                        <IconButton
+                            iconProps={{ iconName: 'SignOut' }}
+                            onClick={handleLogout}
                             styles={{
                                 root: {
-                                    backgroundColor: '#e1f5fe',
+                                    backgroundColor: 'transparent',
                                     color: '#0078d4',
                                     borderRadius: 4,
-                                    padding: '0 20px',
+                                    ':hover': {
+                                        backgroundColor: '#e1f5fe',
+                                    },
+                                    ':active': {
+                                        backgroundColor: '#b3e5fc',
+                                    }
+                                },
+                                rootHovered: {
+                                    backgroundColor: '#e1f5fe',
+                                }
+                            }}
+                            ariaLabel="Logout"
+                        />
+                    </TooltipHost>
+                </Stack>
+            </Stack>
+
+            {/* Search and Action Bar - Outside Banner */}
+            <Stack
+                horizontal
+                horizontalAlign="space-between"
+                verticalAlign="center"
+                tokens={{ padding: 'm' }}
+                styles={{
+                    root: {
+                        padding: '5px 5px',
+                    }
+                }}
+            >
+                {/* Search Section - Left */}
+                <Stack horizontal tokens={{ childrenGap: 's1' }} verticalAlign="center">
+                    <Dropdown
+                        selectedKey={searchType}
+                        onChange={(event, option) => option && setSearchType(String(option.key))}
+                        options={searchTypeOptions}
+                        styles={{
+                            root: { width: 140 },
+                            dropdown: { height: 32 },
+                        }}
+                        ariaLabel="Search type selection"
+                    />
+
+                    <SearchBox
+                        placeholder={`Search by ${searchType === 'name' ? 'hospital name' : 'hospital code'}...`}
+                        value={searchTerm}
+                        onChange={(event, newValue) => setSearchTerm(newValue || '')}
+                        onSearch={() => fetchHospitals()}
+                        styles={{
+                            root: { width: 250, height: 32 },
+                            box: { height: 32 },
+                        }}
+                        ariaLabel="Search hospitals"
+                    />
+
+                    <PrimaryButton
+                        text="Search"
+                        onClick={() => fetchHospitals()}
+                        styles={{
+                            root: {
+                                backgroundColor: '#0078d4',
+                                color: '#e1f5fe',
+                                borderRadius: 4,
+                                padding: '0 20px',
+                                height: 32,
+                                border: 'none',
+                                minWidth: 100,
+                            }
+                        }}
+                    />
+
+                    {searchTerm && (
+                        <DefaultButton
+                            text="Clear"
+                            onClick={() => {
+                                setSearchTerm("");
+                                fetchHospitals();
+                            }}
+                            styles={{
+                                root: {
+                                    backgroundColor: '#0078d4',
+                                    color: '#e1f5fe',
+                                    borderRadius: 4,
+                                    padding: '0 16px',
                                     height: 32,
                                     border: 'none',
                                     minWidth: 100,
-                                    ':hover': {
-                                        backgroundColor: '#b3e5fc',
-                                    },
-                                    ':active': {
-                                        backgroundColor: '#81d4fa',
-                                    }
+
                                 }
                             }}
                         />
-                    </Stack>
+                    )}
                 </Stack>
-            </div>
+
+                {/* Right Section: Count + Add Hospital */}
+                <Stack horizontal tokens={{ childrenGap: 'm' }} verticalAlign="center">
+                    <Text variant="medium" styles={{ root: { color: '#605e5c' } }}>
+                        {hospitals.length} Registered Hospital{hospitals.length !== 1 ? 's' : ''}
+                    </Text>
+
+                    <PrimaryButton
+                        text="Add Hospital"
+                        onClick={handleCreateHospital}
+                        styles={{
+                            root: {
+                                backgroundColor: '#0078d4',
+                                color: '#e1f5fe',
+                                borderRadius: 4,
+                                padding: '0 20px',
+                                height: 32,
+                                border: 'none',
+                                minWidth: 80,
+                            }
+                        }}
+                    />
+                </Stack>
+            </Stack>
 
             {/* Main Content - NO extra padding */}
-            <div style={{ padding: '24px', margin: 0 }}>
+            <div style={{ margin: 0 }}>
                 {/* Loading State */}
                 {loading && (
-                    <Stack horizontalAlign="center" verticalAlign="center" styles={{ root: { padding: 40 } }}>
+                    <Stack horizontalAlign="center" verticalAlign="center" styles={{ root: { padding: 20} }}>
                         <Spinner label="Loading hospitals..." size={SpinnerSize.large} />
                     </Stack>
                 )}
